@@ -5,6 +5,18 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(FetchContent)
+FetchContent_Declare(
+		marco
+		GIT_REPOSITORY https://github.com/MarcoLabs/MarcoLib.git
+		GIT_TAG main
+)
+
+set(MARCO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(MARCO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(marco)
+
 file(GLOB_RECURSE CAMKO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE CAMKO_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
@@ -20,12 +32,14 @@ if(CAMKO_SOURCES)
 			${CMAKE_CURRENT_SOURCE_DIR}/src
 	)
 	target_compile_options(camko_core PRIVATE -Wall -Wextra -Wpedantic)
+	target_link_libraries(camko_core PUBLIC marco)
 else()
 	add_library(camko_core INTERFACE)
 	target_include_directories(camko_core INTERFACE
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 		$<INSTALL_INTERFACE:include>
 	)
+	target_link_libraries(camko_core INTERFACE marco)
 endif()
 
 add_executable(camko src/main.cpp)
