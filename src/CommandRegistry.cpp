@@ -2,7 +2,7 @@
 #include "InitCommand.h"
 #include <memory>
 
-CommandRegistry& CommandRegistry::CommandRegistry::Instance()
+CommandRegistry& CommandRegistry::Instance()
 {
 	static CommandRegistry instance;
 

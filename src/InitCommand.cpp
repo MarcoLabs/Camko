@@ -11,9 +11,7 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	std::string projectRootDir{};
 
 	if (args.size() > 1)
-	{
-		std::println("Too many arguments");
-		
+	{		
 		return CommandError{false, "Too many arguments"};
 	}
 	
@@ -34,16 +32,12 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 
 	if (! result)
 	{
-		std::println("Could not initilize new project");
-
-		return CommandError{false, "Could not initilize new project"};
+		return CommandError{false, "Could not initialize new project"};
 	}
 
 	std::ofstream configTomlFile(projectPath / "config.toml");
 	if (! configTomlFile)
-	{
-		std::println("Could not create config.toml file");
-		
+	{		
 		return CommandError{false, "Could not create config.toml file"};
 	}
 
@@ -54,25 +48,19 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 
 	if (! result)
 	{
-		std::println("Could not initilize new project");
-
-		return CommandError{false, "Could not initilize new project"};
+		return CommandError{false, "Could not initialize new project"};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "src");
 
 	if (! result)
 	{
-		std::println("Could not initilize new project");
-
-		return CommandError{false, "Could not initilize new project"};
+		return CommandError{false, "Could not initialize new project"};
 	}
 
 	std::ofstream mainFile(projectPath / "src/main.cpp");
 	if (! mainFile)
-	{
-		std::println("Could not create src/main.cpp file");
-		
+	{		
 		return CommandError{false, "Could not create config.toml file"};
 	}
 

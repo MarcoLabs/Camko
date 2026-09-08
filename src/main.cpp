@@ -22,13 +22,22 @@ int main(int argc, const char** argv)
 	if (! commands.Find(argv[1]))
 	{
 		std::println("Unknown command '{}'", argv[1]);
+
+		return 1;
 	}
 
 	Command* command = commands.Find(argv[1]);
 	
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
-	command->Execute(trimmedArgv);
+	CommandError error = command->Execute(trimmedArgv);
+
+	if (! error.valid)
+	{
+		std::println("{}", error.message);
+		
+		return 1;
+	}
 
 	return 0;
 }
