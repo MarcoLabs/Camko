@@ -1,6 +1,4 @@
 #include "CommandRegistry.h"
-#include "InitCommand.h"
-#include <cstring>
 #include <iostream>
 #include <print>
 #include <string>
