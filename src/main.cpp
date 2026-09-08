@@ -1,6 +1,8 @@
+#include "CommandRegistry.h"
 #include "InitCommand.h"
 #include <cstring>
 #include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 
@@ -15,14 +17,18 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 
+	const auto& commands = CommandRegistry::Instance();
+
+	if (! commands.Find(argv[1]))
+	{
+		std::println("Unknown command '{}'", argv[1]);
+	}
+
+	Command* command = commands.Find(argv[1]);
+	
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
-	if (std::strcmp(argv[1], "init" ) == 0)
-	{
-		InitCommand cmd;
-
-		cmd.Execute(trimmedArgv);
-	}
+	command->Execute(trimmedArgv);
 
 	return 0;
 }
