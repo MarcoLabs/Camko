@@ -69,7 +69,7 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 
 	std::println("Successfully initialized new project under {}", std::filesystem::canonical(projectPath).string());
 
-	return CommandError{true, "No errors occured"};
+	return CommandError{true, "No errors occurred"};
 }
 
 std::string InitCommand::Name() const
