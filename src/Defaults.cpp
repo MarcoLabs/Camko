@@ -9,7 +9,7 @@ name = "main"
 version = "0.1.0"
 
 [build]
-cpp-version = "23"
+cpp-version = 23
 source-directory = "src"
 header-directory = "include"
 
