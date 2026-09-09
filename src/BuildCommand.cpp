@@ -22,7 +22,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 	std::ifstream tomlFile(projectRoot / "config.toml");
 	if (! tomlFile.is_open())
 	{
-		return CommandError{false, "Could not find config.toml file"};
+		return CommandError{false, "Could not find the config.toml file"};
 	}
 
 	Marco::TomlReader reader{};
@@ -44,7 +44,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	cMakeListsFile.close();
 
-	return CommandError{true, "No errors occured"};
+	return CommandError{true, "No errors occurred"};
 }
 
 std::string BuildCommand::Name() const
@@ -134,13 +134,13 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	auto version = (*projectSettings).get()["version"];
 	if (! version || ! version.value().get().IsString())
 	{
-		return std::unexpected(CommandError{false, "The version variable in config.toml was not set"});
+		return std::unexpected(CommandError{false, "The version variable in config.toml was not set or is not a string"});
 	}
 
 	partOfCmake += "cmake_minimum_required(VERSION 3.20)\n\n";
 
-	partOfCmake += std::format("project({}\n", projectName);
-	partOfCmake += std::format("\tVERSION {}\n", version.value().get().AsString()->get());
+	partOfCmake += std::format("project(\"{}\"\n", projectName);
+	partOfCmake += std::format("\tVERSION \"{}\"\n", version.value().get().AsString()->get());
 
 	auto description = (*projectSettings).get()["description"];
 	if (description)
@@ -150,15 +150,15 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 			return std::unexpected(CommandError{false, "The description variable in config.toml must be a string"});
 		}
 
-		partOfCmake += std::format("DESCRIPTION {}\n", description.value().get().AsString()->get());
+		partOfCmake += std::format("\tDESCRIPTION \"{}\"\n", description.value().get().AsString()->get());
 	}
 
-	partOfCmake += "LANGUAGES CXX\n)\n\n";
+	partOfCmake += "\tLANGUAGES CXX\n)\n\n";
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard (const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard(const Marco::Toml& toml)
 {
 	std::string partOfCmake{};
 	auto buildOptions = toml["build"];
@@ -170,7 +170,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageSta
 	auto cppVersion = (*buildOptions).get()["cpp-version"];
 	if (! cppVersion || ! (*cppVersion).get().IsNumber())
 	{
-		return std::unexpected(CommandError{false, "Could not find the cpp-version option under the build table in config.toml"});
+		return std::unexpected(CommandError{false, "Could not find the cpp-version option in the build table in config.toml"});
 	}
 
 	partOfCmake += std::format("set(CMAKE_CXX_STANDARD {})\n", (*cppVersion).get().AsNumber().value());
@@ -198,7 +198,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*buildSharedLibs).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" {})\n", (*buildSharedLibs).get().AsBool().value() ? "ON" : "OFF");
@@ -213,7 +213,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableWarnings).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "enable-warnings in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The enable-warnings option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           {})\n", (*enableWarnings).get().AsBool().value() ? "ON" : "OFF");
@@ -228,7 +228,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*warningsAsErrors).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "warnings-as-errors in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The warnings-as-errors option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              {})\n", (*warningsAsErrors).get().AsBool().value() ? "ON" : "OFF");
@@ -243,7 +243,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableSanitizers).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "enable-sanitizers in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The enable-sanitizers option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            {})\n", (*enableSanitizers).get().AsBool().value() ? "ON" : "OFF");
@@ -258,7 +258,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableLto).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "benable-lto in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The enable-lto option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", (*enableLto).get().AsBool().value() ? "ON" : "OFF");
@@ -273,7 +273,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableCCache).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "enable-ccache in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The enable-ccache option in the build table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");
@@ -300,7 +300,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	{
 		if (! (*enableTests).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "enable-ccache in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "The enable-tests option in the tests table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(BUILD_TESTING          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
@@ -336,7 +336,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(ENABLE_CCACHE)
 	find_program(CCACHE_PROGRAM ccache)
 	if(CCACHE_PROGRAM)
-		set(CMAKE_CXX_COMPILER_LAUNCH ${CCACHE_PROGRAM})
+		set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
 	endif()
 endif()
 )";
@@ -352,16 +352,6 @@ std::string BuildCommand::ConstructPositionIndependentCode()
 
 	partOfCmake = R"(
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(ENABLE_LTO)
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
-	if(ipo_supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
-	else()
-		message(WARNING "LTO requested but not supported: ${ipo_error}")
-	endif()
-endif()
 )";
 
 	partOfCmake.push_back('\n');
@@ -428,24 +418,63 @@ std::string BuildCommand::ConstructSourceFiles()
 set(CAMKO_SOURCE_DIR "src" CACHE STRING "Directory containing .cpp source files")
 set(CAMKO_HEADER_DIR "include" CACHE STRING "Directory containing .h header files")
 
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_SOURCE_DIR}")
+	message(FATAL_ERROR
+		"The source directory '${CAMKO_SOURCE_DIR}' does not exist."
+	)
+endif()
+
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_SOURCE_DIR}/main.cpp")
+	message(FATAL_ERROR
+		"The main.cpp file does not exist in the source directory "
+		"'${CAMKO_SOURCE_DIR}'."
+	)
+endif()
+
 file(GLOB_RECURSE CAMKO_ALL_SOURCES CONFIGURE_DEPENDS
 	"${CAMKO_SOURCE_DIR}/*.cpp"
 )
 list(FILTER CAMKO_ALL_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
 if(CAMKO_ALL_SOURCES)
-	add_library(camko_core STATIC ${CAMKO_ALL_SOURCES})
+	add_library(camko_core ${CAMKO_ALL_SOURCES})
 else()
 	add_library(camko_core INTERFACE)
 endif()
 
-target_include_directories(camko_core
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}")
+	target_include_directories(camko_core
+		PUBLIC
+			${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
+	)
+endif()
+
+target_link_libraries(camko_core
+	INTERFACE
+		project_warnings
+		project_sanitizers
 )
 
 add_executable(${PROJECT_NAME} ${CAMKO_SOURCE_DIR}/main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE camko_core project_warnings project_sanitizers)
+
+target_link_libraries(${PROJECT_NAME}
+	PRIVATE
+		camko_core
+)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	CXX_STANDARD ${CMAKE_CXX_STANDARD}
+	CXX_STANDARD_REQUIRED ON
+	CXX_EXTENSIONS OFF
+)
+
+if(TARGET camko_core)
+	set_target_properties(camko_core PROPERTIES
+		CXX_STANDARD ${CMAKE_CXX_STANDARD}
+		CXX_STANDARD_REQUIRED ON
+		CXX_EXTENSIONS OFF
+	)
+endif()
 )";
 
 	partOfCmake.push_back('\n');
@@ -458,10 +487,9 @@ std::string BuildCommand::ConstructTesting()
 	std::string partOfCmake{};
 
 	partOfCmake = R"(
-option(CAMKO_ENABLE_TESTS "Build unit tests" OFF)
 set(CAMKO_TESTS_DIR "tests" CACHE STRING "Directory containing *_test.cpp files")
 
-if(CAMKO_ENABLE_TESTS)
+if(BUILD_TESTING)
 	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_TESTS_DIR}")
 		message(FATAL_ERROR
 			"Tests are enabled but the tests directory "
@@ -482,7 +510,9 @@ if(CAMKO_ENABLE_TESTS)
 			GIT_REPOSITORY https://github.com/google/googletest.git
 			GIT_TAG v1.14.0
 		)
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+		if(MSVC)
+			set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+		endif()
 		FetchContent_MakeAvailable(googletest)
 
 		add_executable(camko_tests ${CAMKO_TEST_SOURCES})
@@ -492,6 +522,13 @@ if(CAMKO_ENABLE_TESTS)
 				camko_core
 				GTest::gtest_main
 				project_warnings
+				project_sanitizers
+		)
+
+		set_target_properties(camko_tests PROPERTIES
+			CXX_STANDARD ${CMAKE_CXX_STANDARD}
+			CXX_STANDARD_REQUIRED ON
+			CXX_EXTENSIONS OFF
 		)
 
 		include(GoogleTest)
@@ -499,7 +536,7 @@ if(CAMKO_ENABLE_TESTS)
 	else()
 		message(STATUS
 			"Tests are enabled but no '*_test.cpp' files were found in "
-			"'${CAMKO_TESTS_DIR}' — skipping test target."
+			"'${CAMKO_TESTS_DIR}' - skipping test target."
 		)
 	endif()
 endif()
@@ -517,7 +554,7 @@ std::string BuildCommand::ConstructInstallRules()
 	partOfCmake = R"(
 include(GNUInstallDirs)
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} camko_core
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -540,7 +577,7 @@ std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marc
 	auto projectName = (*projectSettings).get()["name"];
 	if (! projectName || ! projectName.value().get().IsString())
 	{
-		return std::unexpected(CommandError{false, "The name variable in config.toml not set or is not a string"});
+		return std::unexpected(CommandError{false, "The name variable in config.toml was not set or is not a string"});
 	}
 
 	return (*projectName).get().AsString()->get();
