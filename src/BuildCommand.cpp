@@ -44,6 +44,12 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	cMakeListsFile.close();
 
+	CommandError buildResult = BuildProject(toml);
+	if (! buildResult.valid)
+	{
+		return buildResult;
+	}
+
 	return CommandError{true, "No errors occurred"};
 }
 
@@ -294,7 +300,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	auto enableTests = (*testsOptions).get()["enable-tests"];
 	if (! enableTests)
 	{
-		partOfCmake += "option(BUILD_TESTING          \"Build unit tests\"                         OFF)\n";
+		partOfCmake += "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         OFF)\n";
 	}
 	else
 	{
@@ -303,7 +309,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 			return std::unexpected(CommandError{false, "The enable-tests option in the tests table must be a boolean"});
 		}
 
-		partOfCmake += std::format("option(BUILD_TESTING          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
+		partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
 	}
 
 	return partOfCmake;
@@ -443,10 +449,17 @@ else()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}")
-	target_include_directories(camko_core
-		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
-	)
+	if(CAMKO_ALL_SOURCES)
+		target_include_directories(camko_core
+			PUBLIC
+				${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
+		)
+	else()
+		target_include_directories(camko_core
+			INTERFACE
+				${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
+		)
+	endif()
 endif()
 
 target_link_libraries(camko_core
@@ -489,7 +502,7 @@ std::string BuildCommand::ConstructTesting()
 	partOfCmake = R"(
 set(CAMKO_TESTS_DIR "tests" CACHE STRING "Directory containing *_test.cpp files")
 
-if(BUILD_TESTING)
+if(CAMKO_ENABLE_TESTS)
 	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_TESTS_DIR}")
 		message(FATAL_ERROR
 			"Tests are enabled but the tests directory "
@@ -581,4 +594,74 @@ std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marc
 	}
 
 	return (*projectName).get().AsString()->get();
+}
+
+CommandError BuildCommand::BuildProject(const Marco::Toml& toml)
+{
+	auto buildOptions = toml["build"];
+	if (!buildOptions)
+	{
+		return CommandError{false, "Could not find the build table in config.toml"};
+	}
+
+	auto testOptions = toml["tests"];
+	if (!testOptions)
+	{
+		return CommandError{false, "Could not find the tests table in config.toml"};
+	}
+
+	auto buildType = (*buildOptions).get()["type"];
+	if (!buildType || !(*buildType).get().IsString())
+	{
+		return CommandError{false, "Could not find the type field in the build table in config.toml"};
+	}
+
+	auto sourceDir = (*buildOptions).get()["source-directory"];
+	if (!sourceDir || !(*sourceDir).get().IsString())
+	{
+		return CommandError{false, "Could not find the source-directory field in the build table in config.toml"};
+	}
+
+	auto headerDir = (*buildOptions).get()["header-directory"];
+	if (!headerDir || !(*headerDir).get().IsString())
+	{
+		return CommandError{false, "Could not find the header-directory field in the build table in config.toml"};
+	}
+
+	auto enableTests = (*testOptions).get()["enable-tests"];
+	if (!enableTests || !(*enableTests).get().IsBool())
+	{
+		return CommandError{false, "Could not find the enable-tests field in the tests table in config.toml"};
+	}
+
+	bool testsAreEnabled = enableTests.value().get().AsBool().value();
+
+	std::string testsDirValue = "tests";
+	if (testsAreEnabled)
+	{
+		auto testsDir = (*testOptions).get()["tests-directory"];
+		if (!testsDir || !(*testsDir).get().IsString())
+		{
+			return CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"};
+		}
+		
+		testsDirValue = testsDir.value().get().AsString().value();
+	}
+
+	std::string configureCmd = std::format("cmake -S .camko -B .camko/build -DCMAKE_BUILD_TYPE={} -DCAMKO_SOURCE_DIR=../{} -DCAMKO_HEADER_DIR=../{} -DCAMKO_ENABLE_TESTS={}",
+		buildType.value().get().AsString().value().get(),
+		sourceDir.value().get().AsString().value().get(),
+		headerDir.value().get().AsString().value().get(),
+		testsAreEnabled ? "ON" : "OFF"
+	);
+	
+	if (testsAreEnabled)
+	{
+		configureCmd += std::format(" -DCAMKO_TESTS_DIR=../{}", testsDirValue);
+	}
+
+	std::system(configureCmd.c_str());
+	std::system("cmake --build .camko/build");
+
+	return CommandError{true, ""};
 }
