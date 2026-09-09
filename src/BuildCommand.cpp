@@ -115,6 +115,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructTesting();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructInstallRules();
+	fileContents += *partOfCmake;
+
 	return fileContents;
 }
 
@@ -500,6 +503,25 @@ if(CAMKO_ENABLE_TESTS)
 		)
 	endif()
 endif()
+)";
+
+	partOfCmake.push_back('\n');
+
+	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructInstallRules()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+include(GNUInstallDirs)
+
+install(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 )";
 
 	partOfCmake.push_back('\n');
