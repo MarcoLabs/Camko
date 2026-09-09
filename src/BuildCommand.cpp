@@ -37,11 +37,11 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 	}
 
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
-	
+
 	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
 
 	cMakeListsFile << *cMakeFileContents;
-	
+
 	cMakeListsFile.close();
 
 	return CommandError{true, "No errors occured"};
@@ -93,7 +93,15 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	}
 
 	fileContents += *partOfCmake;
-	
+
+	partOfCmake = ConstructBuildType(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
+
 	return fileContents;
 }
 
@@ -106,7 +114,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	{
 		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
 	}
-	
+
 	auto version = (*projectSettings).get()["version"];
 	if (! version || ! version.value().get().IsString())
 	{
@@ -125,7 +133,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 		{
 			return std::unexpected(CommandError{false, "The description variable in config.toml must be a string"});
 		}
-		
+
 		partOfCmake += std::format("DESCRIPTION {}\n", description.value().get().AsString()->get());
 	}
 
@@ -285,6 +293,23 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	return partOfCmake;
 }
 
+std::expected<std::string, CommandError> BuildCommand::ConstructBuildType(const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+		"Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+endif()
+	)";
+
+	partOfCmake.append("\n\n");
+
+	return partOfCmake;
+}
+
 std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marco::Toml& toml)
 {
 	auto projectSettings = toml["project"];
@@ -292,7 +317,7 @@ std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marc
 	{
 		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
 	}
-	
+
 	auto projectName = (*projectSettings).get()["name"];
 	if (! projectName || ! projectName.value().get().IsString())
 	{

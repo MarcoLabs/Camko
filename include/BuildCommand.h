@@ -18,6 +18,7 @@ private:
 	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Marco::Toml& toml);
 	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Marco::Toml& toml);
 	static std::expected<std::string, CommandError> ConstructTestOptions            (const Marco::Toml& toml);
-	
+	static std::expected<std::string, CommandError> ConstructBuildType              (const Marco::Toml& toml);
+
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
 };
