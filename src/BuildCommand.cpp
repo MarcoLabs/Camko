@@ -112,6 +112,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructSourceFiles();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructTesting();
+	fileContents += *partOfCmake;
+
 	return fileContents;
 }
 
@@ -440,6 +443,63 @@ target_include_directories(camko_core
 
 add_executable(${PROJECT_NAME} ${CAMKO_SOURCE_DIR}/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE camko_core project_warnings project_sanitizers)
+)";
+
+	partOfCmake.push_back('\n');
+
+	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructTesting()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+option(CAMKO_ENABLE_TESTS "Build unit tests" OFF)
+set(CAMKO_TESTS_DIR "tests" CACHE STRING "Directory containing *_test.cpp files")
+
+if(CAMKO_ENABLE_TESTS)
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_TESTS_DIR}")
+		message(FATAL_ERROR
+			"Tests are enabled but the tests directory "
+			"'${CAMKO_TESTS_DIR}' does not exist."
+		)
+	endif()
+
+	enable_testing()
+
+	file(GLOB_RECURSE CAMKO_TEST_SOURCES CONFIGURE_DEPENDS
+		"${CAMKO_TESTS_DIR}/*_test.cpp"
+	)
+
+	if(CAMKO_TEST_SOURCES)
+		include(FetchContent)
+		FetchContent_Declare(
+			googletest
+			GIT_REPOSITORY https://github.com/google/googletest.git
+			GIT_TAG v1.14.0
+		)
+		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+		FetchContent_MakeAvailable(googletest)
+
+		add_executable(camko_tests ${CAMKO_TEST_SOURCES})
+
+		target_link_libraries(camko_tests
+			PRIVATE
+				camko_core
+				GTest::gtest_main
+				project_warnings
+		)
+
+		include(GoogleTest)
+		gtest_discover_tests(camko_tests)
+	else()
+		message(STATUS
+			"Tests are enabled but no '*_test.cpp' files were found in "
+			"'${CAMKO_TESTS_DIR}' — skipping test target."
+		)
+	endif()
+endif()
 )";
 
 	partOfCmake.push_back('\n');
