@@ -94,7 +94,15 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructBuildType(toml);
+	partOfCmake = ConstructBuildType();
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
+
+	partOfCmake = ConstructTooling();
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -293,7 +301,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructBuildType(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructBuildType()
 {
 	std::string partOfCmake{};
 
@@ -303,7 +311,27 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 		"Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
-	)";
+)";
+
+	partOfCmake.append("\n\n");
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructTooling()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+ 
+if(ENABLE_CCACHE)
+	find_program(CCACHE_PROGRAM ccache)
+	if(CCACHE_PROGRAM)
+		set(CMAKE_CXX_COMPILER_LAUNCH ${CCACHE_PROGRAM})
+	endif()
+endif()
+)";
 
 	partOfCmake.append("\n\n");
 
