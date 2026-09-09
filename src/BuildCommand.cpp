@@ -95,19 +95,12 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	fileContents += *partOfCmake;
 
 	partOfCmake = ConstructBuildType();
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
 	fileContents += *partOfCmake;
 
 	partOfCmake = ConstructTooling();
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
+	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructPositionIndepentendCode();
 	fileContents += *partOfCmake;
 
 	return fileContents;
@@ -301,7 +294,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructBuildType()
+std::string BuildCommand::ConstructBuildType()
 {
 	std::string partOfCmake{};
 
@@ -318,7 +311,7 @@ endif()
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructTooling()
+std::string BuildCommand::ConstructTooling()
 {
 	std::string partOfCmake{};
 
@@ -336,6 +329,34 @@ endif()
 	partOfCmake.append("\n\n");
 
 	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructPositionIndepentendCode()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(ENABLE_LTO)
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT ipo_supported OUTPUT ipo_error)
+	if(ipo_supported)
+		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+	else()
+		message(WARNING "LTO requested but not supported: ${ipo_error}")
+	endif()
+endif()
+)";
+
+	partOfCmake.append("\n\n");
+
+	return partOfCmake;
+}
+
+std::string ConstructSantitizers()
+{
+	
 }
 
 std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marco::Toml& toml)
