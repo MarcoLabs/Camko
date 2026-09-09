@@ -23,10 +23,6 @@ enable-ccache = true       # Enable ccache when available
 [tests]
 enable-tests = false
 tests-directory = "tests"
-
-[examples]
-enable-examples = false
-example-directory = "examples"
 	)toml";
 
 	const std::string_view kDefaultMainCpp = R"cpp(
