@@ -103,6 +103,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructPositionIndependentCode();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructSantitizers();
+	fileContents += *partOfCmake;
+
 	return fileContents;
 }
 
@@ -356,7 +359,24 @@ endif()
 
 std::string ConstructSantitizers()
 {
-	
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+add_library(project_sanitizers INTERFACE)
+ 
+if(ENABLE_SANITIZERS AND NOT MSVC)
+	target_compile_options(project_sanitizers INTERFACE
+		-fsanitize=address,undefined -fno-omit-frame-pointer
+	)
+	target_link_options(project_sanitizers INTERFACE
+		-fsanitize=address,undefined
+	)
+endif()
+)";
+
+	partOfCmake.append("\n\n");
+
+	return partOfCmake;
 }
 
 std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marco::Toml& toml)
