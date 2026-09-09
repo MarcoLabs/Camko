@@ -24,6 +24,7 @@ private:
 	static std::string ConstructPositionIndependentCode();
 	static std::string ConstructCompilerWarnings       ();
 	static std::string ConstructSantitizers            ();
+	static std::string ConstructSourceFiles            ();
 
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
 };

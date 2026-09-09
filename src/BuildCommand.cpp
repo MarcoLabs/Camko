@@ -109,6 +109,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructSantitizers();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructSourceFiles();
+	fileContents += *partOfCmake;
+
 	return fileContents;
 }
 
@@ -407,6 +410,39 @@ endif()
 )";
 
 	partOfCmake.append("\n\n");
+
+	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructSourceFiles()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+set(CAMKO_SOURCE_DIR "src" CACHE STRING "Directory containing .cpp source files")
+set(CAMKO_HEADER_DIR "include" CACHE STRING "Directory containing .h header files")
+
+file(GLOB_RECURSE CAMKO_ALL_SOURCES CONFIGURE_DEPENDS
+	"${CAMKO_SOURCE_DIR}/*.cpp"
+)
+list(FILTER CAMKO_ALL_SOURCES EXCLUDE REGEX ".*main\\.cpp$")
+
+if(CAMKO_ALL_SOURCES)
+	add_library(camko_core STATIC ${CAMKO_ALL_SOURCES})
+else()
+	add_library(camko_core INTERFACE)
+endif()
+
+target_include_directories(camko_core
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_HEADER_DIR}
+)
+
+add_executable(${PROJECT_NAME} ${CAMKO_SOURCE_DIR}/main.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE camko_core project_warnings project_sanitizers)
+)";
+
+	partOfCmake.push_back('\n');
 
 	return partOfCmake;
 }
