@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Command.h"
-#include "marco/toml/TomlReader.h"
+#include "marco/toml/Toml.h"
 #include <expected>
 #include <string>
 #include <vector>
@@ -13,5 +13,6 @@ public:
 	std::string Name() const override;
 
 private:
-	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition(const Marco::TomlReader& reader);
+	static std::expected<std::string, CommandError> ConstructCMakeLists            (const Marco::Toml& toml);
+	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition(const Marco::Toml& toml);
 };
