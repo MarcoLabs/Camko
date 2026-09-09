@@ -100,7 +100,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructTooling();
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructPositionIndepentendCode();
+	partOfCmake = ConstructPositionIndependentCode();
 	fileContents += *partOfCmake;
 
 	return fileContents;
@@ -331,7 +331,7 @@ endif()
 	return partOfCmake;
 }
 
-std::string BuildCommand::ConstructPositionIndepentendCode()
+std::string BuildCommand::ConstructPositionIndependentCode()
 {
 	std::string partOfCmake{};
 

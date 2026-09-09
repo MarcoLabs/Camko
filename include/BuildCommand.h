@@ -21,7 +21,7 @@ private:
 	
 	static std::string ConstructBuildType              ();
 	static std::string ConstructTooling                ();
-	static std::string ConstructPositionIndepentendCode();
+	static std::string ConstructPositionIndependentCode();
 	static std::string ConstructSantitizers            ();
 
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
