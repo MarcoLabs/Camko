@@ -103,6 +103,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructPositionIndependentCode();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructCompilerWarnings();
+	fileContents += *partOfCmake;
+	
 	partOfCmake = ConstructSantitizers();
 	fileContents += *partOfCmake;
 
@@ -309,7 +312,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 )";
 
-	partOfCmake.append("\n\n");
+	partOfCmake.push_back('\n');
 
 	return partOfCmake;
 }
@@ -320,7 +323,7 @@ std::string BuildCommand::ConstructTooling()
 
 	partOfCmake = R"(
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
- 
+
 if(ENABLE_CCACHE)
 	find_program(CCACHE_PROGRAM ccache)
 	if(CCACHE_PROGRAM)
@@ -329,7 +332,7 @@ if(ENABLE_CCACHE)
 endif()
 )";
 
-	partOfCmake.append("\n\n");
+	partOfCmake.push_back('\n');
 
 	return partOfCmake;
 }
@@ -352,7 +355,36 @@ if(ENABLE_LTO)
 endif()
 )";
 
-	partOfCmake.append("\n\n");
+	partOfCmake.push_back('\n');
+
+	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructCompilerWarnings()
+{
+	std::string partOfCmake{};
+
+	partOfCmake = R"(
+add_library(project_warnings INTERFACE)
+
+if(ENABLE_WARNINGS)
+	if(MSVC)
+		target_compile_options(project_warnings INTERFACE /W4)
+		if(ENABLE_WARNINGS_AS_ERRORS)
+			target_compile_options(project_warnings INTERFACE /WX)
+		endif()
+	else()
+		target_compile_options(project_warnings INTERFACE
+			-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+		)
+		if(ENABLE_WARNINGS_AS_ERRORS)
+			target_compile_options(project_warnings INTERFACE -Werror)
+		endif()
+	endif()
+endif()
+)";
+
+	partOfCmake.push_back('\n');
 
 	return partOfCmake;
 }
@@ -363,7 +395,7 @@ std::string BuildCommand::ConstructSantitizers()
 
 	partOfCmake = R"(
 add_library(project_sanitizers INTERFACE)
- 
+
 if(ENABLE_SANITIZERS AND NOT MSVC)
 	target_compile_options(project_sanitizers INTERFACE
 		-fsanitize=address,undefined -fno-omit-frame-pointer
