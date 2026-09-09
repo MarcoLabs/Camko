@@ -12,6 +12,11 @@ version = "0.1.0"
 cpp-version = 23
 source-directory = "src"
 header-directory = "include"
+build-shared-libs = false
+enable-warnings = true
+warnings-as-errors = false # Enable ASan/UBSan
+enable-lto = false         # Enable link-time optimization
+enable-ccache = true       # Enable ccache when available
 
 [tests]
 enable-tests = false
