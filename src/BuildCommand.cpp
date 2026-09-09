@@ -19,7 +19,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	std::filesystem::path projectRoot = result.value();
 
-	std::ifstream tomlFile(projectRoot.string() + "config.toml");
+	std::ifstream tomlFile(projectRoot / "config.toml");
 	if (! tomlFile.is_open())
 	{
 		return CommandError{false, "Could not find config.toml file"};
@@ -38,7 +38,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
 	
-	std::ofstream cMakeListsFile(camkoFolderPath.string() + "CMakeLists.txt");
+	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
 
 	cMakeListsFile << *cMakeFileContents;
 	
@@ -56,7 +56,13 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 {
 	std::string fileContents{};
 
-	auto partOfCmake = ConstructCMakeProjectDefinition(toml);
+	auto projectName = GetProjectName(toml);
+	if (! projectName)
+	{
+		return std::unexpected(projectName.error());
+	}
+
+	auto partOfCmake = ConstructCMakeProjectDefinition(toml, *projectName);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -64,10 +70,10 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	
+	return fileContents;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefinition(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefinition(const Marco::Toml& toml, const std::string& projectName)
 {
 	std::string partOfCmake{};
 
@@ -77,12 +83,6 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
 	}
 	
-	auto projectName = (*projectSettings).get()["name"];
-	if (! projectName || ! projectName.value().get().IsString())
-	{
-		return std::unexpected(CommandError{false, "The name variable in config.toml not set or is not a string"});
-	}
-
 	auto version = (*projectSettings).get()["version"];
 	if (! version || ! version.value().get().IsString())
 	{
@@ -91,7 +91,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 
 	partOfCmake += "cmake_minimum_required(VERSION 3.20)\n\n";
 
-	partOfCmake += std::format("project({}\n", projectName.value().get().AsString()->get());
+	partOfCmake += std::format("project({}\n", projectName);
 	partOfCmake += std::format("\tVERSION {}\n", version.value().get().AsString()->get());
 
 	auto description = (*projectSettings).get()["description"];
@@ -108,4 +108,21 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	partOfCmake += "LANGUAGES CXX\n)\n\n";
 
 	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marco::Toml& toml)
+{
+	auto projectSettings = toml["project"];
+	if (! projectSettings)
+	{
+		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
+	}
+	
+	auto projectName = (*projectSettings).get()["name"];
+	if (! projectName || ! projectName.value().get().IsString())
+	{
+		return std::unexpected(CommandError{false, "The name variable in config.toml not set or is not a string"});
+	}
+
+	return (*projectName).get().AsString()->get();
 }
