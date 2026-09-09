@@ -77,6 +77,14 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	}
 
 	fileContents += *partOfCmake;
+
+	partOfCmake = ConstructUserConfigurableOptions(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
 	
 	return fileContents;
 }
@@ -136,6 +144,93 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageSta
 	partOfCmake += std::format("set(CMAKE_CXX_STANDARD {})\n", (*cppVersion).get().AsNumber().value());
 	partOfCmake += "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n";
 	partOfCmake += "set(CMAKE_CXX_EXTENSIONS OFF)\n\n";
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurableOptions(const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+	auto buildOptions = toml["build"];
+	if (! buildOptions || ! (*buildOptions).get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
+	}
+
+	auto buildSharedLibs = (*buildOptions).get()["build-shared-libs"];
+	if (! buildSharedLibs)
+	{
+		partOfCmake += "option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" OFF)\n";
+	}
+	else
+	{
+		if (! (*buildSharedLibs).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" {})\n", (*buildSharedLibs).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	auto enableWarnings = (*buildOptions).get()["enable-warnings"];
+	if (! enableWarnings)
+	{
+		partOfCmake += "option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           ON)\n";
+	}
+	else
+	{
+		if (! (*enableWarnings).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           {})\n", (*enableWarnings).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	auto warningsAsErrors = (*buildOptions).get()["warnings-as-errors"];
+	if (! warningsAsErrors)
+	{
+		partOfCmake += "option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              OFF)\n";
+	}
+	else
+	{
+		if (! (*warningsAsErrors).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              {})\n", (*warningsAsErrors).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	auto enableLto = (*buildOptions).get()["enable-lto"];
+	if (! enableLto)
+	{
+		partOfCmake += "option(ENABLE_LTO             \"Enable link-time optimization\"            OFF)\n";
+	}
+	else
+	{
+		if (! (*enableLto).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", (*enableLto).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	auto enableCCache = (*buildOptions).get()["enable-ccache"];
+	if (! enableCCache)
+	{
+		partOfCmake += "option(ENABLE_CCACHE          \"Use ccache if available\"                  ON)\n";
+	}
+	else
+	{
+		if (! (*enableCCache).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");
+	}
 
 	return partOfCmake;
 }

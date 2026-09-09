@@ -13,9 +13,10 @@ public:
 	std::string Name() const override;
 
 private:
-	static std::expected<std::string, CommandError> ConstructCMakeLists            (const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition(const Marco::Toml& toml, const std::string& projectName);
-	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard (const Marco::Toml& toml);
+	static std::expected<std::string, CommandError> ConstructCMakeLists             (const Marco::Toml& toml);
+	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition (const Marco::Toml& toml, const std::string& projectName);
+	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Marco::Toml& toml);
+	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Marco::Toml& toml);
 	
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
 };
