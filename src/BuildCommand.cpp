@@ -85,6 +85,14 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	}
 
 	fileContents += *partOfCmake;
+
+	partOfCmake = ConstructTestOptions(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
 	
 	return fileContents;
 }
@@ -244,7 +252,34 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 			return std::unexpected(CommandError{false, "enable-ccache in build table should be of type bool"});
 		}
 
-		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");
+		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+	auto testsOptions = toml["tests"];
+	if (! testsOptions || ! (*testsOptions).get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml"});
+	}
+
+	auto enableTests = (*testsOptions).get()["enable-tests"];
+	if (! enableTests)
+	{
+		partOfCmake += "option(BUILD_TESTING          \"Build unit tests\"                         OFF)\n";
+	}
+	else
+	{
+		if (! (*enableTests).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "enable-ccache in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(BUILD_TESTING          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
 	}
 
 	return partOfCmake;
