@@ -70,6 +70,14 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructCMakeLanguageStandard(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
+	
 	return fileContents;
 }
 
@@ -78,7 +86,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	std::string partOfCmake{};
 
 	auto projectSettings = toml["project"];
-	if (! projectSettings)
+	if (! projectSettings || ! (*projectSettings).get().IsObject())
 	{
 		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
 	}
@@ -106,6 +114,28 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	}
 
 	partOfCmake += "LANGUAGES CXX\n)\n\n";
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard (const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+	auto buildOptions = toml["build"];
+	if (! buildOptions || ! (*buildOptions).get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
+	}
+
+	auto cppVersion = (*buildOptions).get()["cpp-version"];
+	if (! cppVersion || ! (*cppVersion).get().IsNumber())
+	{
+		return std::unexpected(CommandError{false, "Could not find the cpp-version option under the build table in config.toml"});
+	}
+
+	partOfCmake += std::format("set(CMAKE_CXX_STANDARD {})\n", (*cppVersion).get().AsNumber().value());
+	partOfCmake += "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n";
+	partOfCmake += "set(CMAKE_CXX_EXTENSIONS OFF)\n\n";
 
 	return partOfCmake;
 }
