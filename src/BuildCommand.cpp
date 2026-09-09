@@ -181,7 +181,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableWarnings).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "enable-warnings in build table should be of type bool"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           {})\n", (*enableWarnings).get().AsBool().value() ? "ON" : "OFF");
@@ -196,10 +196,25 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*warningsAsErrors).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "warnings-as-errors in build table should be of type bool"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              {})\n", (*warningsAsErrors).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	auto enableSanitizers = (*buildOptions).get()["enable-sanitizers"];
+	if (! enableSanitizers)
+	{
+		partOfCmake += "option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            OFF)\n";
+	}
+	else
+	{
+		if (! (*enableSanitizers).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "enable-sanitizers in build table should be of type bool"});
+		}
+
+		partOfCmake += std::format("option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            {})\n", (*enableSanitizers).get().AsBool().value() ? "ON" : "OFF");
 	}
 
 	auto enableLto = (*buildOptions).get()["enable-lto"];
@@ -211,7 +226,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableLto).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "benable-lto in build table should be of type bool"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", (*enableLto).get().AsBool().value() ? "ON" : "OFF");
@@ -226,7 +241,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	{
 		if (! (*enableCCache).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "build-shared-libs in build table should be of type bool"});
+			return std::unexpected(CommandError{false, "enable-ccache in build table should be of type bool"});
 		}
 
 		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");

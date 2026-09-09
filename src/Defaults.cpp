@@ -16,6 +16,7 @@ header-directory = "include"
 build-shared-libs = false
 enable-warnings = true
 warnings-as-errors = false
+enable-sanitizers = false  # Build with ASan/UBSan enabled
 enable-lto = false         # Enable link-time optimization
 enable-ccache = true       # Enable ccache when available
 
