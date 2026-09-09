@@ -3,6 +3,7 @@
 #include "Command.h"
 #include "marco/toml/Toml.h"
 #include <expected>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -30,5 +31,5 @@ private:
 
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
 
-	static CommandError BuildProject(const Marco::Toml& toml);
+	static CommandError BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot);
 };

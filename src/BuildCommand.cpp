@@ -44,7 +44,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	cMakeListsFile.close();
 
-	CommandError buildResult = BuildProject(toml);
+	CommandError buildResult = BuildProject(toml, projectRoot);
 	if (! buildResult.valid)
 	{
 		return buildResult;
@@ -596,7 +596,7 @@ std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marc
 	return (*projectName).get().AsString()->get();
 }
 
-CommandError BuildCommand::BuildProject(const Marco::Toml& toml)
+CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
 {
 	auto buildOptions = toml["build"];
 	if (!buildOptions)
@@ -648,7 +648,23 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml)
 		testsDirValue = testsDir.value().get().AsString().value();
 	}
 
-	std::string configureCmd = std::format("cmake -S .camko -B .camko/build -DCMAKE_BUILD_TYPE={} -DCAMKO_SOURCE_DIR=../{} -DCAMKO_HEADER_DIR=../{} -DCAMKO_ENABLE_TESTS={}",
+	const auto camkoDir = projectRoot / ".camko";
+	const auto buildDir = camkoDir / "build";
+	
+	const auto sourceDirPath =
+		projectRoot / sourceDir.value().get().AsString().value().get();
+	
+	const auto headerDirPath =
+		projectRoot / headerDir.value().get().AsString().value().get();
+	
+	std::string configureCmd = std::format(
+		"cmake -S \"{}\" -B \"{}\" "
+		"-DCMAKE_BUILD_TYPE={} "
+		"-DCAMKO_SOURCE_DIR=\"../{}\" "
+		"-DCAMKO_HEADER_DIR=\"../{}\" "
+		"-DCAMKO_ENABLE_TESTS={}",
+		camkoDir.string(),
+		buildDir.string(),
 		buildType.value().get().AsString().value().get(),
 		sourceDir.value().get().AsString().value().get(),
 		headerDir.value().get().AsString().value().get(),
@@ -657,11 +673,17 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml)
 	
 	if (testsAreEnabled)
 	{
-		configureCmd += std::format(" -DCAMKO_TESTS_DIR=../{}", testsDirValue);
+		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", testsDirValue);
 	}
-
+	
 	std::system(configureCmd.c_str());
-	std::system("cmake --build .camko/build");
+	
+	std::string buildCmd = std::format(
+		"cmake --build \"{}\"",
+		buildDir.string()
+	);
+	
+	std::system(buildCmd.c_str());
 
 	return CommandError{true, ""};
 }
