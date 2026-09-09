@@ -357,7 +357,7 @@ endif()
 	return partOfCmake;
 }
 
-std::string ConstructSantitizers()
+std::string BuildCommand::ConstructSantitizers()
 {
 	std::string partOfCmake{};
 
