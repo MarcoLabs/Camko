@@ -337,9 +337,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructDependencies(con
 	
 	const Marco::TomlArray dependenciesArr = dependencies.value().get().AsArray().value().get();
 
-	for (size_t i = 0; i < dependenciesArr.size(); i++)
+	for (const auto& dependency : dependenciesArr)
 	{
-		auto libPackageName = dependencies->get()[i].value().get()["find-package-name"];
+		auto libPackageName = dependency["find-package-name"];
 		if (libPackageName && libPackageName.value().get().IsString())
 		{
 			std::string libPackageNameString = libPackageName.value().get().AsString()->get();
@@ -356,7 +356,7 @@ endif()
 			continue;
 		}
 		
-		auto libName = dependencies->get()[i].value().get()["name"];
+		auto libName = dependency["name"];
 		if (! libName || ! (*libName).get().IsString())
 		{
 			return std::unexpected(CommandError{false, "The name in the dependencies array does not exist or isnt a string"});
@@ -364,7 +364,7 @@ endif()
 
 		std::string libNameString = (*libName).get().AsString().value().get();
 		
-		auto libRepo = dependencies->get()[i].value().get()["repo"];
+		auto libRepo = dependency["repo"];
 		if (! libRepo || ! (*libRepo).get().IsString())
 		{
 			return std::unexpected(CommandError{false, "The repo in the dependencies array does not exist or isnt a string"});
@@ -372,13 +372,13 @@ endif()
 
 		std::string libRepoString = (*libRepo).get().AsString().value().get();
 
-		auto libVersion = dependencies->get()[i].value().get()["version"];
+		auto libVersion = dependency["version"];
 		if (libVersion && !(*libVersion).get().IsString())
 		{
 			return std::unexpected(CommandError{false, "The version in the dependencies array isnt a string"});
 		}
 
-		auto libLinkTarget = dependencies->get()[i].value().get()["link-target"];
+		auto libLinkTarget = dependency["link-target"];
 		if (libLinkTarget && ! (*libLinkTarget).get().IsString())
 		{
 			return std::unexpected(CommandError{false, "The link-target in the dependencies array isnt a string"});
