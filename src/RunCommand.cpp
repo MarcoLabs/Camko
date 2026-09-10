@@ -45,10 +45,13 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 	}
 
 	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / *projectName;
+	std::string runArguments = ConstructRunArguments(args);
 
 	std::println("\n\n");
+
+	std::string command = std::format("{} {}", executablePath.string(), runArguments);
 	
-	int errorCode = std::system(executablePath.c_str());
+	int errorCode = std::system(command.c_str());
 
 	if (errorCode == 0)
 	{
@@ -80,4 +83,17 @@ std::expected<std::string, CommandError> RunCommand::GetProjectName(const Marco:
 	}
 
 	return (*projectName).get().AsString()->get();
+}
+
+std::string RunCommand::ConstructRunArguments(const std::vector<std::string>& args)
+{
+	std::string argsString{};
+
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		argsString += args[i];
+		argsString.push_back(' ');
+	}
+
+	return argsString;
 }

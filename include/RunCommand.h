@@ -11,4 +11,6 @@ public:
 
 private:
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
+	
+	static std::string ConstructRunArguments(const std::vector<std::string>& args);
 };
