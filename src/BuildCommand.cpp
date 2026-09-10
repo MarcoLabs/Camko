@@ -1,5 +1,7 @@
 #include "BuildCommand.h"
+#include "CommandError.h"
 #include "Utils.h"
+#include "marco/toml/TomlValue.h"
 #include <expected>
 #include <filesystem>
 #include <format>
@@ -118,6 +120,14 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructSourceFiles();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructDependencies(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
+	
 	partOfCmake = ConstructTesting();
 	fileContents += *partOfCmake;
 
@@ -310,6 +320,97 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 		}
 
 		partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructDependencies(const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+	
+	auto dependencies = toml["dependencies"];
+	if (! dependencies || ! (*dependencies).get().IsArray())
+	{
+		return "";
+	}
+	
+	const Marco::TomlArray dependenciesArr = dependencies.value().get().AsArray().value().get();
+
+	for (const auto& dependency : dependenciesArr)
+	{
+		auto libPackageName = dependency["find-package-name"];
+		if (libPackageName && libPackageName.value().get().IsString())
+		{
+			std::string libPackageNameString = libPackageName.value().get().AsString()->get();
+			partOfCmake += std::format(R"(
+find_package({0} REQUIRED)
+if(CAMKO_ALL_SOURCES)
+	target_link_libraries(camko_core PUBLIC {0}::{0})
+else()
+	target_link_libraries(camko_core INTERFACE {0}::{0})
+endif()
+)", libPackageNameString);
+
+			partOfCmake.push_back('\n');
+			continue;
+		}
+		
+		auto libName = dependency["name"];
+		if (! libName || ! (*libName).get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The name in the dependencies array does not exist or isnt a string"});
+		}
+
+		std::string libNameString = (*libName).get().AsString().value().get();
+		
+		auto libRepo = dependency["repo"];
+		if (! libRepo || ! (*libRepo).get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The repo in the dependencies array does not exist or isnt a string"});
+		}
+
+		std::string libRepoString = (*libRepo).get().AsString().value().get();
+
+		auto libVersion = dependency["version"];
+		if (libVersion && !(*libVersion).get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The version in the dependencies array isnt a string"});
+		}
+
+		auto libLinkTarget = dependency["link-target"];
+		if (libLinkTarget && ! (*libLinkTarget).get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The link-target in the dependencies array isnt a string"});
+		}
+
+		std::string libLinkTargetString{};
+		if (libLinkTarget)
+		{
+			libLinkTargetString = libLinkTarget.value().get().AsString()->get();
+		}
+		else
+		{
+			libLinkTargetString = std::format("{}::{}", libNameString, libNameString);
+		}
+
+		partOfCmake += "include(FetchContent)\n\n";
+		partOfCmake += "FetchContent_Declare(\n";
+		partOfCmake += '\t' + libNameString + '\n';
+		partOfCmake += "\tGIT_REPOSITORY " + libRepoString + '\n';
+
+		if (libVersion)
+		{
+			partOfCmake += "\tGIT_TAG " + libVersion.value().get().AsString().value().get() + '\n';
+		}
+
+		partOfCmake += ")\nFetchContent_MakeAvailable(" + libNameString + ")\n\n";
+
+		partOfCmake += "if(CAMKO_ALL_SOURCES)\n";
+		partOfCmake += "\ttarget_link_libraries(camko_core PUBLIC " + libLinkTargetString + ")\n";
+		partOfCmake += "else()\n";
+		partOfCmake += "\ttarget_link_libraries(camko_core INTERFACE " + libLinkTargetString + ")\n";
+		partOfCmake += "endif()\n\n";
 	}
 
 	return partOfCmake;
