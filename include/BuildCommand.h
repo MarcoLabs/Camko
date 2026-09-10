@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Command.h"
+#include "CommandError.h"
 #include "marco/toml/Toml.h"
 #include <expected>
 #include <filesystem>
@@ -19,6 +20,7 @@ private:
 	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Marco::Toml& toml);
 	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Marco::Toml& toml);
 	static std::expected<std::string, CommandError> ConstructTestOptions            (const Marco::Toml& toml);
+	static std::expected<std::string, CommandError> ConstructDependencies           (const Marco::Toml& toml);
 	
 	static std::string ConstructBuildType              ();
 	static std::string ConstructTooling                ();
