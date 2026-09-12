@@ -70,7 +70,7 @@ TEST_F(InitCommandTest, NoArgs_ConfigTomlContentMatchesDefault)
 	EXPECT_EQ(content, defaults::kDefaultConfigToml);
 }
 
-TEST_F(InitCommandTest, NoArgs_mainCppContentatchesDefault)
+TEST_F(InitCommandTest, NoArgs_mainCppContentMatchesDefault)
 {
 	CommandError result = this->m_command.Execute({});
 	ASSERT_TRUE(result.valid);
