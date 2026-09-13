@@ -370,7 +370,7 @@ enable-tests = false
 	EXPECT_EQ(result.message, "The build-shared-libs option in the build table must be a boolean");
 }
 
-TEST_F(BuildCommandTest, NonBooleanEnableSanitizers_ReturnsErro)
+TEST_F(BuildCommandTest, NonBooleanEnableSanitizers_ReturnsError)
 {
 	WriteConfig(R"(
 [project]
