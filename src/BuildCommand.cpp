@@ -302,7 +302,11 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 {
 	std::string partOfCmake{};
 	auto testsOptions = toml["tests"];
-	if (! testsOptions || ! (*testsOptions).get().IsObject())
+	if (! testsOptions)
+	{
+		return "";
+	}
+	else if (! (*testsOptions).get().IsObject())
 	{
 		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml"});
 	}
@@ -705,12 +709,6 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 		return CommandError{false, "Could not find the build table in config.toml"};
 	}
 
-	auto testOptions = toml["tests"];
-	if (!testOptions)
-	{
-		return CommandError{false, "Could not find the tests table in config.toml"};
-	}
-
 	auto buildType = (*buildOptions).get()["type"];
 	if (!buildType || !(*buildType).get().IsString())
 	{
@@ -729,24 +727,31 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 		return CommandError{false, "Could not find the header-directory field in the build table in config.toml"};
 	}
 
-	auto enableTests = (*testOptions).get()["enable-tests"];
-	if (!enableTests || !(*enableTests).get().IsBool())
-	{
-		return CommandError{false, "Could not find the enable-tests field in the tests table in config.toml"};
-	}
-
-	bool testsAreEnabled = enableTests.value().get().AsBool().value();
-
+	bool testsAreEnabled = false;
 	std::string testsDirValue = "tests";
-	if (testsAreEnabled)
+	
+	auto testOptions = toml["tests"];
+	if (testOptions)
 	{
-		auto testsDir = (*testOptions).get()["tests-directory"];
-		if (!testsDir || !(*testsDir).get().IsString())
+		auto enableTests = (*testOptions).get()["enable-tests"];
+		if (!enableTests || !(*enableTests).get().IsBool())
 		{
-			return CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"};
+			return CommandError{false, "Could not find the enable-tests field in the tests table in config.toml"};
 		}
-		
-		testsDirValue = testsDir.value().get().AsString().value();
+	
+		testsAreEnabled = enableTests.value().get().AsBool().value();
+	
+		testsDirValue = "tests";
+		if (testsAreEnabled)
+		{
+			auto testsDir = (*testOptions).get()["tests-directory"];
+			if (!testsDir || !(*testsDir).get().IsString())
+			{
+				return CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"};
+			}
+			
+			testsDirValue = testsDir.value().get().AsString().value();
+		}
 	}
 
 	const auto camkoDir = projectRoot / ".camko";
