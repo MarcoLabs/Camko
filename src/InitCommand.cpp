@@ -18,6 +18,11 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	if (! args.empty())
 	{
 		projectRootDir += args[0];
+
+		if (std::filesystem::exists(projectRootDir))
+		{
+			return CommandError{false, std::format("Folder {} already exists", projectRootDir)};
+		}
 	}
 	else
 	{
