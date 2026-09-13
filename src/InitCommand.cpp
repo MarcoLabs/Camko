@@ -11,10 +11,10 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	std::string projectRootDir{};
 
 	if (args.size() > 1)
-	{		
+	{
 		return CommandError{false, "Too many arguments"};
 	}
-	
+
 	if (! args.empty())
 	{
 		projectRootDir += args[0];
@@ -85,7 +85,7 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 {
 	std::ofstream configTomlFile(projectPath / "config.toml");
 	if (! configTomlFile)
-	{		
+	{
 		return CommandError{false, "Could not create config.toml file"};
 	}
 
@@ -94,7 +94,7 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 
 	std::ofstream mainFile(projectPath / "src/main.cpp");
 	if (! mainFile)
-	{		
+	{
 		return CommandError{false, "Could not create config.toml file"};
 	}
 
