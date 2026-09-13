@@ -28,21 +28,36 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 
 	projectPath /= projectRootDir;
 
+	CommandError result = InitializeEmptyProject(projectPath);
+	if (! result.valid)
+	{
+		return result;
+	}
+
+	result = FillConfigAndMainFile(projectPath);
+	if (! result.valid)
+	{
+		return result;
+	}
+
+	std::println("Successfully initialized new project under {}", std::filesystem::canonical(projectPath).string());
+
+	return CommandError{true, "No errors occurred"};
+}
+
+std::string InitCommand::Name() const
+{
+	return "init";
+}
+
+CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& projectPath)
+{
 	bool result = std::filesystem::create_directories(projectPath / ".camko");
 
 	if (! result)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
-
-	std::ofstream configTomlFile(projectPath / "config.toml");
-	if (! configTomlFile)
-	{		
-		return CommandError{false, "Could not create config.toml file"};
-	}
-
-	configTomlFile << defaults::kDefaultConfigToml;
-	configTomlFile.close();
 
 	result = std::filesystem::create_directories(projectPath / "include");
 
@@ -58,6 +73,20 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 		return CommandError{false, "Could not initialize new project"};
 	}
 
+	return CommandError{true, "No errors occured"};
+}
+
+CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& projectPath)
+{
+	std::ofstream configTomlFile(projectPath / "config.toml");
+	if (! configTomlFile)
+	{		
+		return CommandError{false, "Could not create config.toml file"};
+	}
+
+	configTomlFile << defaults::kDefaultConfigToml;
+	configTomlFile.close();
+
 	std::ofstream mainFile(projectPath / "src/main.cpp");
 	if (! mainFile)
 	{		
@@ -67,12 +96,5 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	mainFile << defaults::kDefaultMainCpp;
 	mainFile.close();
 
-	std::println("Successfully initialized new project under {}", std::filesystem::canonical(projectPath).string());
-
-	return CommandError{true, "No errors occurred"};
-}
-
-std::string InitCommand::Name() const
-{
-	return "init";
+	return CommandError{true, "No errors occured"};
 }
