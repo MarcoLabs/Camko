@@ -78,7 +78,7 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 		return CommandError{false, "Could not initialize new project"};
 	}
 
-	return CommandError{true, "No errors occured"};
+	return CommandError{true, "No errors occurred"};
 }
 
 CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& projectPath)
@@ -101,5 +101,5 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 	mainFile << defaults::kDefaultMainCpp;
 	mainFile.close();
 
-	return CommandError{true, "No errors occured"};
+	return CommandError{true, "No errors occurred"};
 }
