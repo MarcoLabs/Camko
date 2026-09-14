@@ -2,6 +2,7 @@
 #include "BuildCommand.h"
 #include "InitCommand.h"
 #include "RunCommand.h"
+#include "TestCommand.h"
 #include <memory>
 
 CommandRegistry& CommandRegistry::Instance()
@@ -16,6 +17,7 @@ CommandRegistry::CommandRegistry()
 	this->m_commands.emplace("init", std::make_unique<InitCommand>());
 	this->m_commands.emplace("build", std::make_unique<BuildCommand>());
 	this->m_commands.emplace("run", std::make_unique<RunCommand>());
+	this->m_commands.emplace("test", std::make_unique<TestCommand>());
 }
 
 Command* CommandRegistry::Find(const std::string& name) const

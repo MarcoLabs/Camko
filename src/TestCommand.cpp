@@ -1,16 +1,14 @@
-#include "RunCommand.h"
+#include "TestCommand.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
 #include "Utils.h"
-#include "marco/toml/Toml.h"
 #include "marco/toml/TomlReader.h"
-#include <expected>
-#include <filesystem>
 #include <fstream>
 #include <print>
+#include <string>
+#include <vector>
 
-
-CommandError RunCommand::Execute(const std::vector<std::string>& args)
+CommandError TestCommand::Execute(const std::vector<std::string>& args)
 {
 	const auto& commands = CommandRegistry::Instance();
 
@@ -37,20 +35,19 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 	Marco::Toml toml = reader.Parse(tomlFile);
 
 	tomlFile.close();
-	
+
 	auto projectName = GetProjectName(toml);
 	if (! projectName)
 	{
 		return projectName.error();
 	}
 
-	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / *projectName;
-	std::string runArguments = ConstructRunArguments(args);
+	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / (*projectName + "_tests");
 
 	std::println("\n\n");
 
-	std::string command = std::format("{} {}", executablePath.string(), runArguments);
-	
+	std::string command = executablePath.string();
+
 	int errorCode = std::system(command.c_str());
 
 	if (errorCode == 0)
@@ -63,20 +60,7 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 	}
 }
 
-std::string RunCommand::Name() const
+std::string TestCommand::Name() const
 {
-	return "run";
-}
-
-std::string RunCommand::ConstructRunArguments(const std::vector<std::string>& args)
-{
-	std::string argsString{};
-
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		argsString += args[i];
-		argsString.push_back(' ');
-	}
-
-	return argsString;
+	return "test";
 }
