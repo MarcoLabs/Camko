@@ -633,9 +633,9 @@ if(CAMKO_ENABLE_TESTS)
 		endif()
 		FetchContent_MakeAvailable(googletest)
 
-		add_executable(camko_tests ${CAMKO_TEST_SOURCES})
+		add_executable(${PROJECT_NAME}_tests ${CAMKO_TEST_SOURCES})
 
-		target_link_libraries(camko_tests
+		target_link_libraries(${PROJECT_NAME}_tests
 			PRIVATE
 				camko_core
 				GTest::gtest_main
@@ -643,14 +643,14 @@ if(CAMKO_ENABLE_TESTS)
 				project_sanitizers
 		)
 
-		set_target_properties(camko_tests PROPERTIES
+		set_target_properties(${PROJECT_NAME}_tests PROPERTIES
 			CXX_STANDARD ${CMAKE_CXX_STANDARD}
 			CXX_STANDARD_REQUIRED ON
 			CXX_EXTENSIONS OFF
 		)
 
 		include(GoogleTest)
-		gtest_discover_tests(camko_tests)
+		gtest_discover_tests(${PROJECT_NAME}_tests)
 	else()
 		message(STATUS
 			"Tests are enabled but no '*_test.cpp' files were found in "
