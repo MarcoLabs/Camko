@@ -684,23 +684,6 @@ install(TARGETS ${PROJECT_NAME} camko_core
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::GetProjectName(const Marco::Toml& toml)
-{
-	auto projectSettings = toml["project"];
-	if (! projectSettings)
-	{
-		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
-	}
-
-	auto projectName = (*projectSettings).get()["name"];
-	if (! projectName || ! projectName.value().get().IsString())
-	{
-		return std::unexpected(CommandError{false, "The name variable in config.toml was not set or is not a string"});
-	}
-
-	return (*projectName).get().AsString()->get();
-}
-
 CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
 {
 	auto buildOptions = toml["build"];

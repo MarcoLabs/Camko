@@ -31,7 +31,5 @@ private:
 	static std::string ConstructTesting                ();
 	static std::string ConstructInstallRules           ();
 
-	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
-
 	static CommandError BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot);
 };

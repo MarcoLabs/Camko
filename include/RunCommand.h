@@ -9,8 +9,6 @@ public:
 	CommandError Execute(const std::vector<std::string>& args) override;
 	std::string Name() const override;
 
-private:
-	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
-	
+private:	
 	static std::string ConstructRunArguments(const std::vector<std::string>& args);
 };
