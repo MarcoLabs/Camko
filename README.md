@@ -19,6 +19,7 @@
 	- [`camko init`](#camko-init)
 	- [`camko build`](#camko-build)
 	- [`camko run`](#camko-run)
+	- [`camko test`](#camko-test)
 - [Configuration reference (`config.toml`)](#configuration-reference-configtoml)
 	- [`[project]`](#project)
 	- [`[build]`](#build)
@@ -92,6 +93,9 @@ camko build
 
 # Run it (arguments after `run` are passed through to your program's argv)
 camko run argument1 argument2
+
+# Run the test suite
+camko test
 ```
 
 ---
@@ -146,6 +150,19 @@ Builds the project (equivalent to `camko build`) and then runs the resulting exe
 
 Any arguments after `run` are forwarded directly to your program's `main(argc, argv)`.
 
+### `camko test`
+
+```
+camko test
+```
+
+Builds the project and then runs the test suite.
+
+> **Note:** `camko test` currently attempts to build and run tests regardless of the `[tests].enable-tests` setting in `config.toml` - it does not check that flag before running. If your `tests/` directory is missing, empty, or doesn't define any `*_test.cpp` files, expect the underlying CMake/CTest step to fail or report no tests found rather than being skipped cleanly.
+
+- Test files must use the **`_test.cpp` postfix** (e.g. `foo_test.cpp`) to be picked up and registered as tests. Files that don't follow this naming convention are not included in the test build.
+- Tests are only supported through **Google Test**. This is the sole testing framework camko integrates with, and it's a fixed part of the tool - it isn't configurable and there are no plans to support alternative test frameworks.
+
 ---
 
 ## Configuration reference (`config.toml`)
@@ -198,6 +215,8 @@ enable-ccache = true
 |-------------------|--------|-------------|-------------|
 | `enable-tests`    | bool   | `false`     | Enable building and registering tests. |
 | `tests-directory` | string | `"tests"`   | Directory containing test files. Files must follow the `*_test.cpp` naming convention. |
+
+> Tests are built with **Google Test** - this is the only supported testing framework and is not configurable. Only files ending in `_test.cpp` inside `tests-directory` are picked up. Note that `camko test` (see [Commands](#camko-test)) does not currently check `enable-tests` before attempting to run tests.
  
 ```toml
 [tests]
@@ -299,3 +318,5 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
 4. CMake performs the actual compilation, and camko simply reports the result.
 
 ` camko run` doesn't implement its own incremental build tracking - it always triggers a build step first and relies on CMake to determine whether anything has actually changed.
+
+`camko test` follows the same pattern as `camko run`: it builds first, then invokes CTest. It does not check `[tests].enable-tests` before doing so, and it only knows about test files matching the `*_test.cpp` naming convention, built against Google Test.
