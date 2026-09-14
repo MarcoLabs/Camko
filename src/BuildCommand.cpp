@@ -717,9 +717,18 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 	if (testOptions)
 	{
 		auto enableTests = (*testOptions).get()["enable-tests"];
-		if (!enableTests || !(*enableTests).get().IsBool())
+		std::println("{}", enableTests.has_value());
+		if (! enableTests.has_value())
 		{
-			return CommandError{false, "Could not find the enable-tests field in the tests table in config.toml"};
+			testsAreEnabled = false;
+		}
+		else if (! (*enableTests).get().IsBool())
+		{
+			return CommandError{false, "The enable-tests field in the tests table must a bool"};
+		}
+		else
+		{
+			testsAreEnabled = enableTests.value().get().AsBool().value();
 		}
 	
 		testsAreEnabled = enableTests.value().get().AsBool().value();
