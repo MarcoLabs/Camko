@@ -1,4 +1,4 @@
-#include "ExampleCommand.h"
+#include "ExamplesCommand.h"
 #include "CommandRegistry.h"
 #include "Utils.h"
 #include <filesystem>
@@ -6,7 +6,7 @@
 
 static bool IsExecutable(const std::filesystem::perms& permissions);
 
-CommandError ExampleCommand::Execute(const std::vector<std::string>& args)
+CommandError ExamplesCommand::Execute(const std::vector<std::string>& args)
 {
 	const auto& commands = CommandRegistry::Instance();
 
@@ -30,12 +30,12 @@ CommandError ExampleCommand::Execute(const std::vector<std::string>& args)
 	return error;
 }
 
-std::string ExampleCommand::Name() const
+std::string ExamplesCommand::Name() const
 {
-	return "example";
+	return "examples";
 }
 
-CommandError ExampleCommand::RunAllExecutables(const std::string& examplesPathDir)
+CommandError ExamplesCommand::RunAllExecutables(const std::string& examplesPathDir)
 {
 	for (const auto& executable : std::filesystem::directory_iterator(examplesPathDir))
 	{

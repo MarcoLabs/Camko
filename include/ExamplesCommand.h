@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-class ExampleCommand : public Command
+class ExamplesCommand : public Command
 {
 public:
 	CommandError Execute(const std::vector<std::string>& args) override;

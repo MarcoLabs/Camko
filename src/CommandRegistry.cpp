@@ -1,6 +1,6 @@
 #include "CommandRegistry.h"
 #include "BuildCommand.h"
-#include "ExampleCommand.h"
+#include "ExamplesCommand.h"
 #include "InitCommand.h"
 #include "RunCommand.h"
 #include "TestCommand.h"
@@ -19,7 +19,7 @@ CommandRegistry::CommandRegistry()
 	this->m_commands.emplace("build", std::make_unique<BuildCommand>());
 	this->m_commands.emplace("run", std::make_unique<RunCommand>());
 	this->m_commands.emplace("test", std::make_unique<TestCommand>());
-	this->m_commands.emplace("examples", std::make_unique<ExampleCommand>());
+	this->m_commands.emplace("examples", std::make_unique<ExamplesCommand>());
 }
 
 Command* CommandRegistry::Find(const std::string& name) const
