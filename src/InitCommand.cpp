@@ -45,6 +45,12 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 		return result;
 	}
 
+	result = AddGitIgnoreFile(projectPath);
+	if (! result.valid)
+	{
+		return result;
+	}
+
 	std::println("Successfully initialized new project under {}", std::filesystem::canonical(projectPath).string());
 
 	return CommandError{true, "No errors occurred"};
@@ -102,4 +108,18 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 	mainFile.close();
 
 	return CommandError{true, "No errors occurred"};
+}
+
+CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectPath)
+{
+	std::ofstream gitIgnoreFile(projectPath / ".gitignore");
+	if (! gitIgnoreFile)
+	{
+		return CommandError{false, "Could not create .gitignore file"};
+	}
+
+	gitIgnoreFile << defaults::kDefaultGitIgnore;
+	gitIgnoreFile.close();
+
+	return CommandError{true, "No errors occured"};
 }
