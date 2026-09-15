@@ -363,7 +363,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(
 	{
 		if (! (*enableExamples).get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "The enable-examples option in the tests table must be a boolean"});
+			return std::unexpected(CommandError{false, "The enable-examples option in the examples table must be a boolean"});
 		}
 
 		partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", (*enableExamples).get().AsBool().value() ? "ON" : "OFF");
