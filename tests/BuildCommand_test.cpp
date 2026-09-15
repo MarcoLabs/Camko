@@ -427,7 +427,7 @@ cpp-version = 23
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the tests table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the tests table in config.toml. Is it a table?");
 }
 
 TEST_F(BuildCommandTest, NonBooleanEnableTests_ReturnsError)
