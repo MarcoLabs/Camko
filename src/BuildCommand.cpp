@@ -140,6 +140,9 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	partOfCmake = ConstructTesting();
 	fileContents += *partOfCmake;
 
+	partOfCmake = ConstructExamples();
+	fileContents += *partOfCmake;
+
 	partOfCmake = ConstructInstallRules();
 	fileContents += *partOfCmake;
 
@@ -712,12 +715,12 @@ set(CAMKO_EXAMPLES_PATH "examples" CACHE STRING "Directory containing all exammp
 
 if(CAMKO_ENABLE_EXAMPLES)
 	file(GLOB_RECURSE CAMKO_EXAMPLE_SOURCES CONFIGURE_DEPENDS
-	"../${CAMKO_EXAMPLES_PATH}/main.cpp"
+	"${CAMKO_EXAMPLES_PATH}/main.cpp"
 	)
 
 	foreach(CAMKO_EXAMPLE_SRC ${CAMKO_EXAMPLE_SOURCES})
 		file(RELATIVE_PATH CAMKO_EXAMPLE_REL
-			"${CMAKE_CURRENT_SOURCE_DIR}/../${CAMKO_EXAMPLES_PATH}"
+			"${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_EXAMPLES_PATH}"
 			"${CAMKO_EXAMPLE_SRC}"
 		)
 		get_filename_component(CAMKO_EXAMPLE_DIR "${CAMKO_EXAMPLE_REL}" DIRECTORY)
@@ -790,7 +793,7 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 	if (testOptions)
 	{
 		auto enableTests = (*testOptions).get()["enable-tests"];
-		std::println("{}", enableTests.has_value());
+
 		if (! enableTests.has_value())
 		{
 			testsAreEnabled = false;
@@ -804,7 +807,6 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 			testsAreEnabled = enableTests.value().get().AsBool().value();
 		}
 	
-		testsDirValue = "tests";
 		if (testsAreEnabled)
 		{
 			auto testsDir = (*testOptions).get()["tests-directory"];
@@ -814,6 +816,39 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 			}
 			
 			testsDirValue = testsDir.value().get().AsString().value();
+		}
+	}
+
+	bool examplesAreEnabled = false;
+	std::string examplesDirValue = "examples";
+
+	auto examplesOptions = toml["examples"];
+	if (examplesOptions)
+	{
+		auto enableExamples = (*examplesOptions).get()["enable-examples"];
+		
+		if (! enableExamples.has_value())
+		{
+			examplesAreEnabled = false;
+		}
+		else if (! (*enableExamples).get().IsBool())
+		{
+			return CommandError{false, "The enable-examples field in the tests table must a bool"};
+		}
+		else
+		{
+			examplesAreEnabled = enableExamples.value().get().AsBool().value();
+		}
+
+		if (examplesAreEnabled)
+		{
+			auto examplesDir = (*examplesOptions).get()["examples-directory"];
+			if (!examplesDir || ! (*examplesDir).get().IsString())
+			{
+				return CommandError{false, "Could not find the examples-directory field in the tests table in config.toml"};
+			}
+
+			examplesDirValue = examplesDir.value().get().AsString().value();
 		}
 	}
 
@@ -831,20 +866,27 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 		"-DCMAKE_BUILD_TYPE={} "
 		"-DCAMKO_SOURCE_DIR=\"../{}\" "
 		"-DCAMKO_HEADER_DIR=\"../{}\" "
-		"-DCAMKO_ENABLE_TESTS={}",
+		"-DCAMKO_ENABLE_TESTS={} "
+		"-DCAMKO_ENABLE_EXAMPLES={}",
 		camkoDir.string(),
 		buildDir.string(),
 		buildType.value().get().AsString().value().get(),
 		sourceDir.value().get().AsString().value().get(),
 		headerDir.value().get().AsString().value().get(),
-		testsAreEnabled ? "ON" : "OFF"
+		testsAreEnabled ?    "ON" : "OFF",
+		examplesAreEnabled ? "ON" : "OFF"
 	);
 	
 	if (testsAreEnabled)
 	{
 		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", testsDirValue);
 	}
-	
+
+	if (examplesAreEnabled)
+	{
+		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", examplesDirValue);
+	}
+
 	std::system(configureCmd.c_str());
 	
 	std::string buildCmd = std::format(
