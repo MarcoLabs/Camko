@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <print>
 #include <string>
 #include <vector>
 #include <marco/toml/Toml.h>
@@ -95,6 +96,14 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	fileContents += *partOfCmake;
 
 	partOfCmake = ConstructTestOptions(toml);
+	if (! partOfCmake.has_value())
+	{
+		return std::unexpected(partOfCmake.error());
+	}
+
+	fileContents += *partOfCmake;
+
+	partOfCmake = ConstructExamplesOptions(toml);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -308,7 +317,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	}
 	else if (! (*testsOptions).get().IsObject())
 	{
-		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml"});
+		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml. Is it a table?"});
 	}
 
 	auto enableTests = (*testsOptions).get()["enable-tests"];
@@ -324,6 +333,37 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 		}
 
 		partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
+	}
+
+	return partOfCmake;
+}
+
+std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(const Marco::Toml& toml)
+{
+	std::string partOfCmake{};
+	auto exampleOptions = toml["examples"];
+	if (! exampleOptions)
+	{
+		return "";
+	}
+	else if (! (*exampleOptions).get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the examples table in config.toml. Is it a table?"});
+	}
+
+	auto enableExamples = (*exampleOptions).get()["enable-examples"];
+	if (! enableExamples)
+	{
+		partOfCmake += "option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           OFF)\n";
+	}
+	else
+	{
+		if (! (*enableExamples).get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-examples option in the tests table must be a boolean"});
+		}
+
+		partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", (*enableExamples).get().AsBool().value() ? "ON" : "OFF");
 	}
 
 	return partOfCmake;
@@ -730,8 +770,6 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 		{
 			testsAreEnabled = enableTests.value().get().AsBool().value();
 		}
-	
-		testsAreEnabled = enableTests.value().get().AsBool().value();
 	
 		testsDirValue = "tests";
 		if (testsAreEnabled)
