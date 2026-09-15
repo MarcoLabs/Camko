@@ -25,7 +25,6 @@ CommandError ExampleCommand::Execute(const std::vector<std::string>& args)
 
 	std::filesystem::path examplesPath = *projectRoot / ".camko" / "build" / "examples";
 
-	std::println("\n");
 	error = RunAllExecutables(examplesPath.string());
 
 	return error;
@@ -40,6 +39,8 @@ CommandError ExampleCommand::RunAllExecutables(const std::string& examplesPathDi
 {
 	for (const auto& executable : std::filesystem::directory_iterator(examplesPathDir))
 	{
+		std::println("\n");
+
 		if (! executable.is_regular_file())
 		{
 			continue;
@@ -65,7 +66,7 @@ CommandError ExampleCommand::RunAllExecutables(const std::string& examplesPathDi
 		std::string command = "\"" + p.string() + "\"";
 
 		int errorCode = std::system(command.c_str());
-	
+
 		if (errorCode != 0)
 		{
 			return CommandError{false, "Errors occured"};
