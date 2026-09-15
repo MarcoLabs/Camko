@@ -30,6 +30,7 @@ private:
 	static std::string ConstructSantitizers            ();
 	static std::string ConstructSourceFiles            ();
 	static std::string ConstructTesting                ();
+	static std::string ConstructExamples               ();
 	static std::string ConstructInstallRules           ();
 
 	static CommandError BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot);

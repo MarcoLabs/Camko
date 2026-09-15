@@ -705,6 +705,39 @@ endif()
 	return partOfCmake;
 }
 
+std::string BuildCommand::ConstructExamples()
+{
+	std::string partOfCmake = R"(
+set(CAMKO_EXAMPLES_PATH "examples" CACHE STRING "Directory containing all exammples files")
+
+if(CAMKO_ENABLE_EXAMPLES)
+	file(GLOB_RECURSE CAMKO_EXAMPLE_SOURCES CONFIGURE_DEPENDS
+	"../${CAMKO_EXAMPLES_PATH}/main.cpp"
+	)
+
+	foreach(CAMKO_EXAMPLE_SRC ${CAMKO_EXAMPLE_SOURCES})
+		file(RELATIVE_PATH CAMKO_EXAMPLE_REL
+			"${CMAKE_CURRENT_SOURCE_DIR}/../${CAMKO_EXAMPLES_PATH}"
+			"${CAMKO_EXAMPLE_SRC}"
+		)
+		get_filename_component(CAMKO_EXAMPLE_DIR "${CAMKO_EXAMPLE_REL}" DIRECTORY)
+		string(REPLACE "/" "_" CAMKO_EXAMPLE_NAME "${CAMKO_EXAMPLE_DIR}")
+		set(CAMKO_EXAMPLE_TARGET "${CAMKO_EXAMPLE_NAME}_example")
+
+		add_executable(${CAMKO_EXAMPLE_TARGET} "${CAMKO_EXAMPLE_SRC}")
+		target_link_libraries(${CAMKO_EXAMPLE_TARGET} PRIVATE camko_core)
+		set_target_properties(${CAMKO_EXAMPLE_TARGET} PROPERTIES
+			RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples"
+		)
+		endforeach()
+endif()
+)";
+
+	partOfCmake.push_back('\n');
+
+	return partOfCmake;
+}
+
 std::string BuildCommand::ConstructInstallRules()
 {
 	std::string partOfCmake{};
