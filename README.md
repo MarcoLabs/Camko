@@ -20,6 +20,7 @@
 	- [`camko build`](#camko-build)
 	- [`camko run`](#camko-run)
 	- [`camko test`](#camko-test)
+	- [`camko examples`](#camko-examples)
 - [Configuration reference (`config.toml`)](#configuration-reference-configtoml)
 	- [`[project]`](#project)
 	- [`[build]`](#build)
@@ -162,6 +163,25 @@ Builds the project and then runs the test suite.
 
 - Test files must use the **`_test.cpp` postfix** (e.g. `foo_test.cpp`) to be picked up and registered as tests. Files that don't follow this naming convention are not included in the test build.
 - Tests are only supported through **Google Test**. This is the sole testing framework camko integrates with, and it's a fixed part of the tool - it isn't configurable and there are no plans to support alternative test frameworks.
+
+### `camko examples`
+
+```
+camko examples
+```
+
+Builds and runs every example in the project's `examples/` directory.
+
+- Each example is a subfolder containing its own `main.cpp` — this is what camko looks for to identify something as a runnable example. A folder without a `main.cpp` is not picked up.
+- Folders can be **nested** — `camko examples` walks the tree recursively, so you can organize examples into subcategories (e.g. `examples/networking/tcp/main.cpp`, `examples/networking/udp/main.cpp`) and they'll still be discovered.
+- Before running each one, camko prints which example is about to execute, so output from different examples doesn't blur together:
+
+```
+Running tcp_example
+Running udp_example
+```
+
+- Examples are run in sequence, one at a time — if one blocks on input or hangs, subsequent examples won't start until it finishes or is killed.
 
 ---
 
