@@ -117,7 +117,16 @@ CommandError HelpCommand::Execute(const std::vector<std::string>& args)
 		return CommandError{true, "No errors occured"};
 	}
 
-	
+	std::string command = args[0];
+
+	if (helpMessages.find(command) == helpMessages.end())
+	{
+		return CommandError{false, "Unknown argument. Try camko help [COMMAND] for more information"};
+	}
+
+	std::println("{}", helpMessages.at(command));
+
+	return CommandError{true, "No errors occured"};
 }
 
 std::string HelpCommand::Name() const
