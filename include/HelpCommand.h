@@ -13,5 +13,5 @@ public:
 	std::string Name() const override;
 
 private:
-	static std::unordered_map<std::string, std::string_view> helpMessages;
+	static const std::unordered_map<std::string, std::string_view> helpMessages;
 };

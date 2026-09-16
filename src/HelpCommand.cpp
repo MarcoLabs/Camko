@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-std::unordered_map<std::string, std::string_view> HelpCommand::helpMessages = {
+const std::unordered_map<std::string, std::string_view> HelpCommand::helpMessages = {
 	{"init", 
 R"(
 Scaffold a new camko project
