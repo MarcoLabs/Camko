@@ -195,8 +195,8 @@ camko --regenerate-config
 
 Resets `config.toml` back to the default minimal configuration (the same one `camko init` generates — see [Minimal `config.toml`](#minimal-configtoml)).
 
-- If `config.toml` already exists in the current directory, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[[dependencies]]` entries, etc. — are discarded.
-- If `config.toml` doesn't exist, it is created fresh with the same default contents.
+- If `config.toml` already exists at the project root, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[[dependencies]]` entries, etc. — are discarded.
+- If `config.toml` doesn't exist, it is created fresh at the project root with the same default contents.
 - This is a standalone flag, not tied to a specific subcommand — it doesn't build, run, or touch `.camko/`. It only writes `config.toml`.
 - Useful when a config has been hand-edited into an invalid or confusing state and you'd rather start over than fix it field by field.
 
