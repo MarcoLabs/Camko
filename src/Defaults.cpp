@@ -46,8 +46,10 @@ COMMANDS:
 
 OPTIONS:
 	-h, --help       Print help information
-	-V, --version    Print version information
+	-v, --version    Print version information
 
 Run 'camko help <COMMAND>' for more information on a specific command.
 )";
+
+	const std::string_view kCamkoVersion = "0.1.0";
 }
