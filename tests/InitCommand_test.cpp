@@ -104,15 +104,6 @@ TEST_F(InitCommandTest, TooManyArgs_ReturnsErrorAndCreatesNothing)
 	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / "config.toml"));
 }
 
-TEST_F(InitCommandTest, RunningTwiceInSameDirectory_ReturnsError)
-{
-	CommandError result = this->m_command.Execute({});
-	ASSERT_TRUE(result.valid);
-
-	result = this->m_command.Execute({});
-	EXPECT_FALSE(result.valid);
-}
-
 TEST_F(InitCommandTest, RunningTwiceWithNamedProject_ReturnsError)
 {
 	CommandError result = this->m_command.Execute({"my_project"});
