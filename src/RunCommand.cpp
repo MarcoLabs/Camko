@@ -7,8 +7,7 @@
 #include <expected>
 #include <filesystem>
 #include <fstream>
-#include <print>
-
+#include <iostream>
 
 CommandError RunCommand::Execute(const std::vector<std::string>& args)
 {
@@ -16,19 +15,19 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 
 	CommandError error = commands.Find("build")->Execute(args);
 
-	if (! error.valid)
+	if (!error.valid)
 	{
 		return error;
 	}
 
 	auto projectRoot = utils::GetCamkoProjectRootDirectory();
-	if (! projectRoot)
+	if (!projectRoot)
 	{
 		return projectRoot.error();
 	}
 
 	std::ifstream tomlFile(*projectRoot / "config.toml");
-	if (! tomlFile.is_open())
+	if (!tomlFile.is_open())
 	{
 		return CommandError{false, "Could not find the config.toml file"};
 	}
@@ -39,7 +38,7 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 	tomlFile.close();
 	
 	auto projectName = GetProjectName(toml);
-	if (! projectName)
+	if (!projectName)
 	{
 		return projectName.error();
 	}
@@ -47,7 +46,7 @@ CommandError RunCommand::Execute(const std::vector<std::string>& args)
 	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / *projectName;
 	std::string runArguments = ConstructRunArguments(args);
 
-	std::println("\n\n");
+	std::cout << "\n\n";
 
 	std::string command = std::format("{} {}", executablePath.string(), runArguments);
 	

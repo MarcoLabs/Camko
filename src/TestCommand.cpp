@@ -4,7 +4,7 @@
 #include "Utils.h"
 #include "marco/toml/TomlReader.h"
 #include <fstream>
-#include <print>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -14,19 +14,19 @@ CommandError TestCommand::Execute(const std::vector<std::string>& args)
 
 	CommandError error = commands.Find("build")->Execute(args);
 
-	if (! error.valid)
+	if (!error.valid)
 	{
 		return error;
 	}
 
 	auto projectRoot = utils::GetCamkoProjectRootDirectory();
-	if (! projectRoot)
+	if (!projectRoot)
 	{
 		return projectRoot.error();
 	}
 
 	std::ifstream tomlFile(*projectRoot / "config.toml");
-	if (! tomlFile.is_open())
+	if (!tomlFile.is_open())
 	{
 		return CommandError{false, "Could not find the config.toml file"};
 	}
@@ -37,14 +37,14 @@ CommandError TestCommand::Execute(const std::vector<std::string>& args)
 	tomlFile.close();
 
 	auto projectName = GetProjectName(toml);
-	if (! projectName)
+	if (!projectName)
 	{
 		return projectName.error();
 	}
 
 	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / (*projectName + "_tests");
 
-	std::println("\n\n");
+	std::cout << "\n\n";
 
 	std::string command = executablePath.string();
 

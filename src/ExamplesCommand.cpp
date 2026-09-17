@@ -2,6 +2,7 @@
 #include "CommandRegistry.h"
 #include "Utils.h"
 #include <filesystem>
+#include <iostream>
 #include <print>
 
 static bool IsExecutable(const std::filesystem::perms& permissions);
@@ -39,7 +40,7 @@ CommandError ExamplesCommand::RunAllExecutables(const std::string& examplesPathD
 {
 	for (const auto& executable : std::filesystem::directory_iterator(examplesPathDir))
 	{
-		std::println("\n");
+		std::cout << std::endl;
 
 		if (! executable.is_regular_file())
 		{
@@ -61,7 +62,7 @@ CommandError ExamplesCommand::RunAllExecutables(const std::string& examplesPathD
 		}
 #endif
 
-		std::println("\033[32mRunning {} \033[0m", p.filename().string());
+		std::cout << "\033[32mRunning p.filename().string() <<  \033[0m" << std::endl;
 
 		std::string command = "\"" + p.string() + "\"";
 

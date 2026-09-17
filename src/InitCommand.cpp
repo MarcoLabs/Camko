@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <iostream>
 #include <optional>
-#include <print>
 #include <system_error>
 
 static std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath);
@@ -19,7 +19,7 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 		return CommandError{false, "Too many arguments"};
 	}
 
-	if (! args.empty())
+	if (!args.empty())
 	{
 		projectRootDir += args[0];
 
@@ -38,24 +38,25 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	projectPath /= projectRootDir;
 
 	CommandError result = InitializeEmptyProject(projectPath);
-	if (! result.valid)
+	if (!result.valid)
 	{
 		return result;
 	}
 
 	result = FillConfigAndMainFile(projectPath);
-	if (! result.valid)
+	if (!result.valid)
 	{
 		return result;
 	}
 
 	result = AddGitIgnoreFile(projectPath);
-	if (! result.valid)
+	if (!result.valid)
 	{
 		return result;
 	}
 
-	std::println("Successfully initialized new project under {}", std::filesystem::canonical(projectPath).string());
+	std::cout << "Successfully initialized new project under "
+			  << std::filesystem::canonical(projectPath).string() << std::endl;
 
 	return CommandError{true, "No errors occurred"};
 }
@@ -78,14 +79,14 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 
 	result = std::filesystem::create_directories(projectPath / "include", ec);
 
-	if (! result && ec.value() != 0)
+	if (!result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "src", ec);
 
-	if (! result && ec.value() != 0)
+	if (!result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
@@ -98,7 +99,7 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 	auto configTomlFile = CreateFile(projectPath / "config.toml");
 	if (configTomlFile)
 	{
-		if (! configTomlFile.value().is_open())
+		if (!configTomlFile.value().is_open())
 		{
 			return CommandError{false, "Could not create config.toml file"};
 		}
@@ -110,7 +111,7 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 	auto mainFile = CreateFile(projectPath / "src/main.cpp");
 	if (mainFile)
 	{
-		if (! mainFile.value().is_open())
+		if (!mainFile.value().is_open())
 		{
 			return CommandError{false, "Could not create src/main.cpp file"};
 		}
@@ -125,7 +126,7 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectPath)
 {
 	std::ofstream gitIgnoreFile(projectPath / ".gitignore");
-	if (! gitIgnoreFile)
+	if (!gitIgnoreFile)
 	{
 		return CommandError{false, "Could not create .gitignore file"};
 	}

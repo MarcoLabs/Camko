@@ -1,7 +1,7 @@
 #include "CommandRegistry.h"
 #include "Defaults.h"
 #include "Utils.h"
-#include <print>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,9 +18,9 @@ int main(int argc, const char** argv)
 
 	const auto& commands = CommandRegistry::Instance();
 
-	if (! commands.Find(argv[1]))
+	if (!commands.Find(argv[1]))
 	{
-		std::println("Unknown command '{}'", argv[1]);
+		std::cout << "Unknown command '" << argv[1] << "'" << std::endl;
 
 		return 1;
 	}
@@ -31,9 +31,9 @@ int main(int argc, const char** argv)
 
 	CommandError error = command->Run(trimmedArgv);
 
-	if (! error.valid)
+	if (!error.valid)
 	{
-		std::println("{}", error.message);
+		std::cout << error.message << std::endl;
 
 		return 1;
 	}
@@ -52,7 +52,7 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 {
 	if (argc == 1)
 	{
-		std::println("{}", defaults::kDefaultHelpMessage);
+		std::cout << defaults::kDefaultHelpMessage << std::endl;
 
 		return true;
 	}
@@ -61,13 +61,13 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 
 	if (arg == "-v" || arg == "--version")
 	{
-		std::println("{}", defaults::kCamkoVersion);
+		std::cout << defaults::kCamkoVersion << std::endl;
 
 		return true;
 	}
 	else if (arg == "-h" || arg == "--help")
 	{
-		std::println("{}", defaults::kDefaultHelpMessage);
+		std::cout << defaults::kDefaultHelpMessage << std::endl;
 
 		return true;
 	}
@@ -76,11 +76,11 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 		CommandError error = utils::FillConfigFile(defaults::kDefaultConfigToml);
 		if (error.valid)
 		{
-			std::println("Successfully regenerated the config");
+			std::cout << "Successfully regenerated the config" << std::endl;
 		}
 		else
 		{
-			std::println("{}", error.message);
+			std::cout << error.message << std::endl;
 		}
 		
 		return true;

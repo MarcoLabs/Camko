@@ -1,7 +1,7 @@
 #include "HelpCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
-#include <print>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -112,7 +112,7 @@ CommandError HelpCommand::Execute(const std::vector<std::string>& args)
 	
 	if (args.empty())
 	{
-		std::println("{}", defaults::kDefaultHelpMessage);
+		std::cout << defaults::kDefaultHelpMessage << std::endl;
 
 		return CommandError{true, "No errors occured"};
 	}
@@ -124,7 +124,7 @@ CommandError HelpCommand::Execute(const std::vector<std::string>& args)
 		return CommandError{false, "Unknown argument. Try camko help [COMMAND] for more information"};
 	}
 
-	std::println("{}", helpMessages.at(command));
+	std::cout << helpMessages.at(command) << std::endl;
 
 	return CommandError{true, "No errors occured"};
 }
