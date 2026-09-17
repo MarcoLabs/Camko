@@ -1,5 +1,6 @@
 #include "Utils.h"
 #include "CommandError.h"
+#include "marco/utils/FileUtils.h"
 #include <expected>
 #include <filesystem>
 #include <system_error>
@@ -34,4 +35,17 @@ std::expected<std::filesystem::path, CommandError> utils::GetCamkoProjectRootDir
 	}
 
 	return std::unexpected(CommandError{false, "Error: Could not find an active camko project"});
+}
+
+CommandError utils::FillConfigFile(const std::string_view& content)
+{
+	auto projectRoot = GetCamkoProjectRootDirectory();
+	if (! projectRoot)
+	{
+		return projectRoot.error();
+	}
+
+	Marco::WriteFile(*projectRoot / "config.toml", content.data());
+
+	return CommandError{true, "No errors occured"};
 }

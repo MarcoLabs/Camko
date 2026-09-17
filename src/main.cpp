@@ -1,5 +1,6 @@
 #include "CommandRegistry.h"
 #include "Defaults.h"
+#include "Utils.h"
 #include <print>
 #include <string>
 #include <string_view>
@@ -68,6 +69,20 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 	{
 		std::println("{}", defaults::kDefaultHelpMessage);
 
+		return true;
+	}
+	else if (arg == "--regenerate-config")
+	{
+		CommandError error = utils::FillConfigFile(defaults::kDefaultConfigToml);
+		if (error.valid)
+		{
+			std::println("Successfully regenerated the config");
+		}
+		else
+		{
+			std::println("{}", error.message);
+		}
+		
 		return true;
 	}
 
