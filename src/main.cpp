@@ -1,5 +1,4 @@
 #include "CommandRegistry.h"
-#include <iostream>
 #include <print>
 #include <string>
 #include <vector>
@@ -10,7 +9,7 @@ int main(int argc, const char** argv)
 {
 	if (argc <= 1)
 	{
-		std::cout << "Enter arguments." << std::endl;
+		std::println("Enter arguments.");
 
 		return 1;
 	}
@@ -25,7 +24,7 @@ int main(int argc, const char** argv)
 	}
 
 	Command* command = commands.Find(argv[1]);
-	
+
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
 	CommandError error = command->Run(trimmedArgv);
@@ -33,7 +32,7 @@ int main(int argc, const char** argv)
 	if (! error.valid)
 	{
 		std::println("{}", error.message);
-		
+
 		return 1;
 	}
 
