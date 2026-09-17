@@ -21,6 +21,7 @@
 	- [`camko run`](#camko-run)
 	- [`camko test`](#camko-test)
 	- [`camko examples`](#camko-examples)
+	- [`camko --regenerate-config`](#camko---regenerate-config)
 	- [`camko help`](#camko-help)
 - [Configuration reference (`config.toml`)](#configuration-reference-configtoml)
 	- [`[project]`](#project)
@@ -186,6 +187,21 @@ Running udp_example
 
 - Examples are run in sequence, one at a time — if one blocks on input or hangs, subsequent examples won't start until it finishes or is killed.
 
+### `camko --regenerate-config`
+
+```
+camko --regenerate-config
+```
+
+Resets `config.toml` back to the default minimal configuration (the same one `camko init` generates — see [Minimal `config.toml`](#minimal-configtoml)).
+
+- If `config.toml` already exists in the current directory, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[[dependencies]]` entries, etc. — are discarded.
+- If `config.toml` doesn't exist, it is created fresh with the same default contents.
+- This is a standalone flag, not tied to a specific subcommand — it doesn't build, run, or touch `.camko/`. It only writes `config.toml`.
+- Useful when a config has been hand-edited into an invalid or confusing state and you'd rather start over than fix it field by field.
+
+> **Warning:** This overwrites `config.toml` unconditionally and does not prompt for confirmation or create a backup. If you want to keep your current settings, copy `config.toml` elsewhere first.
+
 ### `camko help`
 
 ```
@@ -297,7 +313,7 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
  
 ## Minimal `config.toml`
  
-Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default. `[tests]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project:
+Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default. `[tests]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project, and what `camko --regenerate-config` writes back out:
  
 ```toml
 [project]
