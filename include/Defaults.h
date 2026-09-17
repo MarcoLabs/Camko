@@ -8,4 +8,5 @@ namespace defaults
 	extern const std::string_view kDefaultMainCpp;
 	extern const std::string_view kDefaultGitIgnore;
 	extern const std::string_view kDefaultHelpMessage;
+	extern const std::string_view kCamkoVersion;
 }
