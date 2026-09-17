@@ -21,6 +21,7 @@
 	- [`camko run`](#camko-run)
 	- [`camko test`](#camko-test)
 	- [`camko examples`](#camko-examples)
+	- [`camko help`](#camko-help)
 - [Configuration reference (`config.toml`)](#configuration-reference-configtoml)
 	- [`[project]`](#project)
 	- [`[build]`](#build)
@@ -121,6 +122,8 @@ my-app/
 
 ## Commands
 
+Every command accepts a `-h` / `--help` flag, which prints the same help text as running `camko help [COMMAND]` and exits without doing anything else (e.g. `camko build --help` shows build's help instead of generating or compiling anything).
+
 ### `camko init`
 
 ```
@@ -182,6 +185,23 @@ Running udp_example
 ```
 
 - Examples are run in sequence, one at a time — if one blocks on input or hangs, subsequent examples won't start until it finishes or is killed.
+
+### `camko help`
+
+```
+camko help [command]
+```
+
+Prints general help, or detailed help for a specific command.
+
+- `command` - the subcommand to show help for (`init`, `build`, `run`, `test`, or `examples`). Optional; if omitted, camko prints its general help/usage summary.
+- Running `camko help [command]` shows the same text as running that command with `-h` or `--help`.
+- Passing an unrecognized command name reports an error and points you back to `camko help [COMMAND]`.
+
+```bash
+camko help
+camko help build
+```
 
 ---
 

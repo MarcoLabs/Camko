@@ -28,4 +28,26 @@ int main()
 
 	const std::string_view kDefaultGitIgnore = 
 R"cpp(.camko/)cpp";
+
+	const std::string_view kDefaultHelpMessage = R"(
+camko 0.1.0
+A CMake build system wrapper and project manager for C++
+
+USAGE:
+	camko <COMMAND>
+
+COMMANDS:
+	init [directory]    Scaffold a new camko project (defaults to current directory)
+	build                Generate CMakeLists.txt and compile the project
+	run [args...]        Build the project, then run the executable, forwarding args
+	test                 Build the project, then run the test suite
+	examples             Build the project, then run every discovered example
+	help                 Print this message or the help of the given subcommand
+
+OPTIONS:
+	-h, --help       Print help information
+	-V, --version    Print version information
+
+Run 'camko help <COMMAND>' for more information on a specific command.
+)";
 }
