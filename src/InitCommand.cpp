@@ -1,7 +1,6 @@
 #include "InitCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
-#include <cstddef>
 #include <filesystem>
 #include <format>
 #include <fstream>
