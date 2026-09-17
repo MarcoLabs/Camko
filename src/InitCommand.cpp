@@ -1,10 +1,15 @@
 #include "InitCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
+#include <cstddef>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <optional>
 #include <print>
+#include <system_error>
+
+static std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath);
 
 CommandError InitCommand::Execute(const std::vector<std::string>& args)
 {
@@ -63,23 +68,25 @@ std::string InitCommand::Name() const
 
 CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& projectPath)
 {
-	bool result = std::filesystem::create_directories(projectPath / ".camko");
+	std::error_code ec{};
+	
+	bool result = std::filesystem::create_directories(projectPath / ".camko", ec);
 
-	if (! result)
+	if (!result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
 
-	result = std::filesystem::create_directories(projectPath / "include");
+	result = std::filesystem::create_directories(projectPath / "include", ec);
 
-	if (! result)
+	if (! result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
 
-	result = std::filesystem::create_directories(projectPath / "src");
+	result = std::filesystem::create_directories(projectPath / "src", ec);
 
-	if (! result)
+	if (! result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
@@ -89,23 +96,29 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 
 CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& projectPath)
 {
-	std::ofstream configTomlFile(projectPath / "config.toml");
-	if (! configTomlFile)
+	auto configTomlFile = CreateFile(projectPath / "config.toml");
+	if (configTomlFile)
 	{
-		return CommandError{false, "Could not create config.toml file"};
+		if (! configTomlFile.value().is_open())
+		{
+			return CommandError{false, "Could not create config.toml file"};
+		}
+		
+		*configTomlFile << defaults::kDefaultConfigToml;
+		(*configTomlFile).close();
 	}
 
-	configTomlFile << defaults::kDefaultConfigToml;
-	configTomlFile.close();
-
-	std::ofstream mainFile(projectPath / "src/main.cpp");
-	if (! mainFile)
+	auto mainFile = CreateFile(projectPath / "src/main.cpp");
+	if (mainFile)
 	{
-		return CommandError{false, "Could not create config.toml file"};
+		if (! mainFile.value().is_open())
+		{
+			return CommandError{false, "Could not create src/main.cpp file"};
+		}
+		
+		*mainFile << defaults::kDefaultMainCpp;
+		(*mainFile).close();
 	}
-
-	mainFile << defaults::kDefaultMainCpp;
-	mainFile.close();
 
 	return CommandError{true, "No errors occurred"};
 }
@@ -122,4 +135,14 @@ CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectP
 	gitIgnoreFile.close();
 
 	return CommandError{true, "No errors occured"};
+}
+
+std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath)
+{
+	if (std::filesystem::exists(filePath))
+	{
+		return {};
+	}
+
+	return std::ofstream(filePath);
 }
