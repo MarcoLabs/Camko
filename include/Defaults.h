@@ -53,4 +53,9 @@ Run 'camko help <COMMAND>' for more information on a specific command.
 )";
 
 	inline constexpr std::string_view kCamkoVersion = "0.1.0";
+
+	inline constexpr std::string_view kClangFile = 
+R"(CompileFlags:
+CompilationDatabase: .camko/build
+)";
 }
