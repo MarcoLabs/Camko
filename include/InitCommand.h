@@ -14,4 +14,5 @@ private:
 	static CommandError InitializeEmptyProject(const std::filesystem::path& projectPath);
 	static CommandError FillConfigAndMainFile(const std::filesystem::path& projectPath);
 	static CommandError AddGitIgnoreFile(const std::filesystem::path& projectPath);
+	static CommandError CreateClangdFile(const std::filesystem::path& projectPath);
 };
