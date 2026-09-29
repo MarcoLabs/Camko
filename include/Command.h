@@ -16,7 +16,7 @@ public:
 	virtual std::string Name() const = 0;
 
 	virtual CommandError Run(const Config& config, const std::vector<std::string>& args);
-	virtual CommandError PrintHelp();
+	virtual CommandError PrintHelp(const Config& config);
 
 protected:
 	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
