@@ -1,5 +1,6 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
+#include "Defaults.h"
 #include "marco/utils/FileUtils.h"
 #include <filesystem>
 #include <fstream>
@@ -11,7 +12,7 @@
 // NOTE ON TEST STRATEGY
 // ---------------------------------------------------------------------------
 // BuildCommand's private static helpers are tested indirectly through Execute()
-// using different config.toml contents, checking the returned CommandError and
+// using different camko config contents, checking the returned CommandError and
 // generated .camko/CMakeLists.txt. Omitting [build].type causes BuildProject to
 // fail predictably after CMakeLists generation but before std::system(...),
 // keeping the tests hermetic; a disabled integration test covers the full path.
@@ -53,7 +54,7 @@ protected:
 
 	void WriteConfig(const std::string& content)
 	{
-		std::ofstream configFile(this->m_tempDir / "config.toml");
+		std::ofstream configFile(this->m_tempDir / defaults::kConfigFileName);
 		configFile << content;
 	}
 
@@ -101,7 +102,7 @@ TEST_F(BuildCommandTest, MissingConfigToml_ReturnsError)
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the config.toml file");
+	EXPECT_EQ(result.message, "Could not find the camko config file");
 }
 
 TEST_F(BuildCommandTest, MissingProjectTable_ReturnsError)
@@ -117,7 +118,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the project table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the project table in camko config");
 }
 
 TEST_F(BuildCommandTest, MissingProjectName_ReturnsError)
@@ -136,7 +137,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "The name variable in config.toml was not set or is not a string");
+	EXPECT_EQ(result.message, "The name variable in camko config was not set or is not a string");
 }
 
 TEST_F(BuildCommandTest, MissingProjectVersion_ReturnsError)
@@ -156,7 +157,7 @@ enable-tests = false
 
 	EXPECT_FALSE(result.valid);
 
-	EXPECT_EQ(result.message, "The version variable in config.toml was not set or is not a string");
+	EXPECT_EQ(result.message, "The version variable in camko config was not set or is not a string");
 }
 
 TEST_F(BuildCommandTest, NonStringVersionReturnsError)
@@ -176,7 +177,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "The version variable in config.toml was not set or is not a string");
+	EXPECT_EQ(result.message, "The version variable in camko config was not set or is not a string");
 }
 
 TEST_F(BuildCommandTest, NonStringDescription_ReturnsError)
@@ -197,7 +198,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "The description variable in config.toml must be a string");
+	EXPECT_EQ(result.message, "The description variable in camko config must be a string");
 }
 
 TEST_F(BuildCommandTest, ValidProjectDefinition_WritesExpectedCMakeContent)
@@ -248,7 +249,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, MissingCppVersion_ReturnsError)
@@ -268,7 +269,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, NonNumericCppVersion_ReturnsError)
@@ -288,7 +289,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, ValidCppVersion_WritesLanguageStandardLines)
@@ -405,7 +406,7 @@ cpp-version = 23
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the type field in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the type field in the build table in camko config");
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_FALSE(Contains(cmakeLists, "option(CAMKO_ENABLE_TESTS"));
@@ -427,7 +428,7 @@ cpp-version = 23
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the tests table in config.toml. Is it a table?");
+	EXPECT_EQ(result.message, "Could not find the tests table in camko config. Is it a table?");
 }
 
 TEST_F(BuildCommandTest, NonBooleanEnableTests_ReturnsError)
@@ -701,7 +702,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the type field in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the type field in the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, MissingSourceDirectoryField_ReturnsError)
@@ -722,7 +723,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the source-directory field in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the source-directory field in the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, MissingHeaderDirectoryField_ReturnsError)
@@ -744,7 +745,7 @@ enable-tests = false
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the header-directory field in the build table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the header-directory field in the build table in camko config");
 }
 
 TEST_F(BuildCommandTest, TestsEnabledWithoutTestsDirectory_ReturnsError)
@@ -767,5 +768,5 @@ enable-tests = true
 	CommandError result = this->m_command.Execute({});
 
 	EXPECT_FALSE(result.valid);
-	EXPECT_EQ(result.message, "Could not find the tests-directory field in the tests table in config.toml");
+	EXPECT_EQ(result.message, "Could not find the tests-directory field in the tests table in camko config");
 }

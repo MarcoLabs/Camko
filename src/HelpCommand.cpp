@@ -20,7 +20,7 @@ OPTIONS:
 -h, --help    Print help information
 
 This creates the standard project layout: src/, include/, a starter
-config.toml, .gitignore and a starter main.cpp.
+camko config, .gitignore and a starter main.cpp.
 )"},
 	{"build",
 R"(
@@ -32,9 +32,9 @@ camko build
 OPTIONS:
 -h, --help    Print help information
 
-Regenerates .camko/CMakeLists.txt from config.toml and invokes CMake to
+Regenerates .camko/CMakeLists.txt from camko config and invokes CMake to
 compile the project. No flags are currently supported — build behavior
-is controlled entirely through config.toml.
+is controlled entirely through camko config.
 )"},
 	{"run", 
 R"(
@@ -68,7 +68,7 @@ ending in _test.cpp inside the configured tests directory are picked up,
 and only Google Test is supported.
 
 Note: this always attempts to build and run tests, regardless of the
-[tests].enable-tests setting in config.toml. If tests-directory is
+[tests].enable-tests setting in camko config. If tests-directory is
 missing, empty, or has no matching files, expect CMake/CTest to fail
 or report no tests found rather than being skipped cleanly.
 )"},

@@ -18,13 +18,13 @@ public:
 	static CommandError BuildCmakeProject(const Config& config, const std::filesystem::path& projectRoot);
 
 private:
-	static std::expected<std::string, CommandError> ConstructCMakeLists             (Config& config);
-	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition (Config& config, const std::string& projectName);
-	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (Config& config);
-	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(Config& config);
-	static std::expected<std::string, CommandError> ConstructTestOptions            (Config& config);
-	static std::expected<std::string, CommandError> ConstructExamplesOptions        (Config& config);
-	static std::expected<std::string, CommandError> ConstructDependencies           (Config& config);
+	static std::expected<std::string, CommandError> ConstructCMakeLists             (const Config& config);
+	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition (const Config& config);
+	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Config& config);
+	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Config& config);
+	static std::expected<std::string, CommandError> ConstructTestOptions            (const Config& config);
+	static std::expected<std::string, CommandError> ConstructExamplesOptions        (const Config& config);
+	static std::expected<std::string, CommandError> ConstructDependencies           (const Config& config);
 
 	static std::string ConstructBuildType              ();
 	static std::string ConstructTooling                ();

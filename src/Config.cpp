@@ -15,7 +15,7 @@ CommandError Config::Parse(const std::filesystem::path& configFilepath)
 	std::ifstream tomlFile(configFilepath);
 	if (! tomlFile.is_open())
 	{
-		return CommandError{false, "Could not find the config.toml file"};
+		return CommandError{false, "Could not find the camko config file"};
 	}
 
 	Marco::TomlReader reader{};
@@ -85,13 +85,13 @@ std::expected<ProjectConfig, CommandError> Config::ParseProjectConfig(const Marc
 	auto projectSettings = toml["project"];
 	if (! projectSettings || ! (*projectSettings).get().IsObject())
 	{
-		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
+		return std::unexpected(CommandError{false, "Could not find the project table in camko config"});
 	}
 
 	auto name = (*projectSettings).get()["name"];
 	if (! name || ! name->get().IsString())
 	{
-		return std::unexpected(CommandError{false, "The name variable in config.toml was not set or is not a string"});
+		return std::unexpected(CommandError{false, "The name variable in camko config was not set or is not a string"});
 	}
 
 	config.name = name->get().AsString()->get();
@@ -99,7 +99,7 @@ std::expected<ProjectConfig, CommandError> Config::ParseProjectConfig(const Marc
 	auto version = (*projectSettings).get()["version"];
 	if (! version || ! version.value().get().IsString())
 	{
-		return std::unexpected(CommandError{false, "The version variable in config.toml was not set or is not a string"});
+		return std::unexpected(CommandError{false, "The version variable in camko config was not set or is not a string"});
 	}
 
 	config.version = version->get().AsString()->get();
@@ -109,7 +109,7 @@ std::expected<ProjectConfig, CommandError> Config::ParseProjectConfig(const Marc
 	{
 		if (! description->get().IsString())
 		{
-			return std::unexpected(CommandError{false, "The description variable in config.toml must be a string"});
+			return std::unexpected(CommandError{false, "The description variable in camko config must be a string"});
 		}
 
 		config.description = description->get().AsString()->get();
@@ -125,7 +125,7 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	auto buildSettings = toml["build"];
 	if (! buildSettings || ! buildSettings->get().IsObject())
 	{
-		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
+		return std::unexpected(CommandError{false, "Could not find the build table in camko config"});
 	}
 
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
@@ -188,7 +188,7 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 	}
 	else if (! testsSettings->get().IsObject())
 	{
-		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml. Is it a table?"});
+		return std::unexpected(CommandError{false, "Could not find the tests table in camko config. Is it a table?"});
 	}
 
 	TestsConfig config{};
@@ -211,7 +211,7 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 	auto testsDirectory = testsSettings->get()["tests-directory"];
 	if (config.enableTests && (! testsDirectory || ! testsDirectory->get().IsString()))
 	{
-		return std::unexpected(CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"});
+		return std::unexpected(CommandError{false, "Could not find the tests-directory field in the tests table in camko config"});
 	}
 
 	config.testsDirectory = testsDirectory->get().AsString()->get();
@@ -260,12 +260,16 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 		config.repo = repo->get().AsString()->get();
 
 		auto version = dependency["version"];
-		if (! version || ! version->get().IsString())
+		if (version)
 		{
-			return std::unexpected(CommandError{false, "The version in the dependencies array does not exist or isnt a string"});
+			if (! version->get().IsString())
+			{
+				return std::unexpected(CommandError{false, "The version in the dependencies array does not exist or isnt a string"});
+			}
+
+			config.version = version->get().AsString()->get();
 		}
 
-		config.version = version->get().AsString()->get();
 
 		auto linkTarget = dependency["link-target"];
 		if (linkTarget)
@@ -313,7 +317,7 @@ std::expected<std::optional<ExamplesConfig>,CommandError> Config::ParseExamplesC
 		auto examplesDirectory = examplesSettings->get()["examples-directory"];
 		if (! examplesDirectory || ! examplesDirectory->get().IsString())
 		{
-			return std::unexpected(CommandError{false, "Could not find the examples-directory field in the tests table in config.toml"});
+			return std::unexpected(CommandError{false, "Could not find the examples-directory field in the tests table in camko config"});
 		}
 
 		config.examplesDirectory = examplesDirectory->get().AsString()->get();

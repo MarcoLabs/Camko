@@ -1,17 +1,16 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
+#include "Config.h"
 #include "Utils.h"
-#include "marco/toml/TomlValue.h"
 #include <expected>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <string>
+#include <variant>
 #include <vector>
-#include <marco/toml/Toml.h>
-#include <marco/toml/TomlReader.h>
 
-CommandError BuildCommand::Execute(const std::vector<std::string>& args)
+CommandError BuildCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	auto result = utils::GetCamkoProjectRootDirectory();
 	if (! result.has_value())
@@ -21,18 +20,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	std::filesystem::path projectRoot = result.value();
 
-	std::ifstream tomlFile(projectRoot / "config.toml");
-	if (! tomlFile.is_open())
-	{
-		return CommandError{false, "Could not find the config.toml file"};
-	}
-
-	Marco::TomlReader reader{};
-	Marco::Toml toml = reader.Parse(tomlFile);
-
-	tomlFile.close();
-
-	auto cMakeFileContents = ConstructCMakeLists(toml);
+	auto cMakeFileContents = ConstructCMakeLists(config);
 	if (! cMakeFileContents.has_value())
 	{
 		return cMakeFileContents.error();
@@ -46,7 +34,7 @@ CommandError BuildCommand::Execute(const std::vector<std::string>& args)
 
 	cMakeListsFile.close();
 
-	CommandError buildResult = BuildProject(toml, projectRoot);
+	CommandError buildResult = BuildProject(config, projectRoot);
 	if (! buildResult.valid)
 	{
 		return buildResult;
@@ -60,107 +48,11 @@ std::string BuildCommand::Name() const
 	return "build";
 }
 
-CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
+CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
-	auto buildOptions = toml["build"];
-	if (!buildOptions)
-	{
-		return CommandError{false, "Could not find the build table in config.toml"};
-	}
-
-	auto buildType = (*buildOptions).get()["type"];
-	if (!buildType || !(*buildType).get().IsString())
-	{
-		return CommandError{false, "Could not find the type field in the build table in config.toml"};
-	}
-
-	auto sourceDir = (*buildOptions).get()["source-directory"];
-	if (!sourceDir || !(*sourceDir).get().IsString())
-	{
-		return CommandError{false, "Could not find the source-directory field in the build table in config.toml"};
-	}
-
-	auto headerDir = (*buildOptions).get()["header-directory"];
-	if (!headerDir || !(*headerDir).get().IsString())
-	{
-		return CommandError{false, "Could not find the header-directory field in the build table in config.toml"};
-	}
-
-	bool testsAreEnabled = false;
-	std::string testsDirValue = "tests";
-	
-	auto testOptions = toml["tests"];
-	if (testOptions)
-	{
-		auto enableTests = (*testOptions).get()["enable-tests"];
-
-		if (! enableTests.has_value())
-		{
-			testsAreEnabled = false;
-		}
-		else if (! (*enableTests).get().IsBool())
-		{
-			return CommandError{false, "The enable-tests field in the tests table must a bool"};
-		}
-		else
-		{
-			testsAreEnabled = enableTests.value().get().AsBool().value();
-		}
-	
-		if (testsAreEnabled)
-		{
-			auto testsDir = (*testOptions).get()["tests-directory"];
-			if (!testsDir || !(*testsDir).get().IsString())
-			{
-				return CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"};
-			}
-			
-			testsDirValue = testsDir.value().get().AsString().value();
-		}
-	}
-
-	bool examplesAreEnabled = false;
-	std::string examplesDirValue = "examples";
-
-	auto examplesOptions = toml["examples"];
-	if (examplesOptions)
-	{
-		auto enableExamples = (*examplesOptions).get()["enable-examples"];
-		
-		if (! enableExamples.has_value())
-		{
-			examplesAreEnabled = false;
-		}
-		else if (! (*enableExamples).get().IsBool())
-		{
-			return CommandError{false, "The enable-examples field in the tests table must a bool"};
-		}
-		else
-		{
-			examplesAreEnabled = enableExamples.value().get().AsBool().value();
-		}
-
-		if (examplesAreEnabled)
-		{
-			auto examplesDir = (*examplesOptions).get()["examples-directory"];
-			if (!examplesDir || ! (*examplesDir).get().IsString())
-			{
-				return CommandError{false, "Could not find the examples-directory field in the tests table in config.toml"};
-			}
-
-			examplesDirValue = examplesDir.value().get().AsString().value();
-		}
-	}
-
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = camkoDir / "build";
-	
-	const auto sourceDirPath =
-		projectRoot / sourceDir.value().get().AsString().value().get();
-	
-	const auto headerDirPath =
-		projectRoot / headerDir.value().get().AsString().value().get();
-	
+
 	std::string configureCmd = std::format(
 		"cmake -S \"{}\" -B \"{}\" "
 		"-DCMAKE_BUILD_TYPE={} "
@@ -170,30 +62,30 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 		"-DCAMKO_ENABLE_EXAMPLES={}",
 		camkoDir.string(),
 		buildDir.string(),
-		buildType.value().get().AsString().value().get(),
-		sourceDir.value().get().AsString().value().get(),
-		headerDir.value().get().AsString().value().get(),
-		testsAreEnabled ?    "ON" : "OFF",
-		examplesAreEnabled ? "ON" : "OFF"
+		Config::BuildTypeToString(config.buildConfig.type),
+		config.buildConfig.sourceDirectory,
+		config.buildConfig.headerDirectory,
+		(config.testsConfig    && config.testsConfig->enableTests)       ? "ON" : "OFF",
+		(config.examplesConfig && config.examplesConfig->enableExamples) ? "ON" : "OFF"
 	);
-	
-	if (testsAreEnabled)
+
+	if (config.testsConfig && config.testsConfig->enableTests)
 	{
-		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", testsDirValue);
+		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", config.testsConfig->testsDirectory);
 	}
 
-	if (examplesAreEnabled)
+	if (config.examplesConfig && config.examplesConfig->enableExamples)
 	{
-		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", examplesDirValue);
+		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", config.examplesConfig->examplesDirectory);
 	}
 
 	std::system(configureCmd.c_str());
-	
+
 	std::string buildCmd = std::format(
 		"cmake --build \"{}\"",
 		buildDir.string()
 	);
-	
+
 	std::system(buildCmd.c_str());
 
 	return CommandError{true, ""};
@@ -201,25 +93,19 @@ CommandError BuildCommand::BuildProject(const Marco::Toml& toml, const std::file
 
 CommandError ConfigureProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
 {
-	
+
 }
 
 CommandError BuildCmakeProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
 {
-	
+
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const Config& config)
 {
 	std::string fileContents{};
 
-	auto projectName = GetProjectName(toml);
-	if (! projectName)
-	{
-		return std::unexpected(projectName.error());
-	}
-
-	auto partOfCmake = ConstructCMakeProjectDefinition(toml, *projectName);
+	auto partOfCmake = ConstructCMakeProjectDefinition(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -227,7 +113,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructCMakeLanguageStandard(toml);
+	partOfCmake = ConstructCMakeLanguageStandard(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -235,7 +121,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructUserConfigurableOptions(toml);
+	partOfCmake = ConstructUserConfigurableOptions(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -243,7 +129,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructTestOptions(toml);
+	partOfCmake = ConstructTestOptions(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -251,7 +137,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructExamplesOptions(toml);
+	partOfCmake = ConstructExamplesOptions(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
@@ -270,21 +156,21 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 
 	partOfCmake = ConstructCompilerWarnings();
 	fileContents += *partOfCmake;
-	
+
 	partOfCmake = ConstructSantitizers();
 	fileContents += *partOfCmake;
 
 	partOfCmake = ConstructSourceFiles();
 	fileContents += *partOfCmake;
 
-	partOfCmake = ConstructDependencies(toml);
+	partOfCmake = ConstructDependencies(config);
 	if (! partOfCmake.has_value())
 	{
 		return std::unexpected(partOfCmake.error());
 	}
 
 	fileContents += *partOfCmake;
-	
+
 	partOfCmake = ConstructTesting();
 	fileContents += *partOfCmake;
 
@@ -297,247 +183,89 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const
 	return fileContents;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefinition(const Marco::Toml& toml, const std::string& projectName)
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefinition(const Config& config)
 {
 	std::string partOfCmake{};
 
-	auto projectSettings = toml["project"];
-	if (! projectSettings || ! (*projectSettings).get().IsObject())
-	{
-		return std::unexpected(CommandError{false, "Could not find the project table in config.toml"});
-	}
-
-	auto version = (*projectSettings).get()["version"];
-	if (! version || ! version.value().get().IsString())
-	{
-		return std::unexpected(CommandError{false, "The version variable in config.toml was not set or is not a string"});
-	}
-
 	partOfCmake += "cmake_minimum_required(VERSION 3.20)\n\n";
 
-	partOfCmake += std::format("project(\"{}\"\n", projectName);
-	partOfCmake += std::format("\tVERSION \"{}\"\n", version.value().get().AsString()->get());
+	partOfCmake += std::format("project(\"{}\"\n", config.projectConfig.name);
+	partOfCmake += std::format("\tVERSION \"{}\"\n", config.projectConfig.version);
 
-	auto description = (*projectSettings).get()["description"];
-	if (description)
-	{
-		if (! description.value().get().IsString())
-		{
-			return std::unexpected(CommandError{false, "The description variable in config.toml must be a string"});
-		}
-
-		partOfCmake += std::format("\tDESCRIPTION \"{}\"\n", description.value().get().AsString()->get());
-	}
-
+	partOfCmake += std::format("\tDESCRIPTION \"{}\"\n", config.projectConfig.description);
 	partOfCmake += "\tLANGUAGES CXX\n)\n\n";
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard(const Config& config)
 {
 	std::string partOfCmake{};
-	auto buildOptions = toml["build"];
-	if (! buildOptions || ! (*buildOptions).get().IsObject())
-	{
-		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
-	}
 
-	auto cppVersion = (*buildOptions).get()["cpp-version"];
-	if (! cppVersion || ! (*cppVersion).get().IsNumber())
-	{
-		return std::unexpected(CommandError{false, "Could not find the cpp-version option in the build table in config.toml"});
-	}
-
-	partOfCmake += std::format("set(CMAKE_CXX_STANDARD {})\n", (*cppVersion).get().AsNumber().value());
+	partOfCmake += std::format("set(CMAKE_CXX_STANDARD {})\n", config.buildConfig.cppVersion);
 	partOfCmake += "set(CMAKE_CXX_STANDARD_REQUIRED ON)\n";
 	partOfCmake += "set(CMAKE_CXX_EXTENSIONS OFF)\n\n";
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurableOptions(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurableOptions(const Config& config)
 {
 	std::string partOfCmake{};
-	auto buildOptions = toml["build"];
-	if (! buildOptions || ! (*buildOptions).get().IsObject())
-	{
-		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
-	}
 
-	auto buildSharedLibs = (*buildOptions).get()["build-shared-libs"];
-	if (! buildSharedLibs)
-	{
-		partOfCmake += "option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" OFF)\n";
-	}
-	else
-	{
-		if (! (*buildSharedLibs).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
-		}
+	partOfCmake += std::format("option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" {})\n", config.buildConfig.buildSharedLibs ? "ON" : "OFF");
+	partOfCmake += std::format("option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           {})\n", config.buildConfig.enableWarnings ? "ON" : "OFF");
+	partOfCmake += std::format("option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              {})\n", config.buildConfig.warningsAsErrors ? "ON" : "OFF");
+	partOfCmake += std::format("option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            {})\n", config.buildConfig.enableSanitizers ? "ON" : "OFF");
+	partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", config.buildConfig.enableLto ? "ON" : "OFF");
+	partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n\n", config.buildConfig.enableCcache ? "ON" : "OFF");
 
-		partOfCmake += std::format("option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" {})\n", (*buildSharedLibs).get().AsBool().value() ? "ON" : "OFF");
-	}
-
-	auto enableWarnings = (*buildOptions).get()["enable-warnings"];
-	if (! enableWarnings)
-	{
-		partOfCmake += "option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           ON)\n";
-	}
-	else
-	{
-		if (! (*enableWarnings).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-warnings option in the build table must be a boolean"});
-		}
-
-		partOfCmake += std::format("option(ENABLE_WARNINGS        \"Enable extra compiler warnings\"           {})\n", (*enableWarnings).get().AsBool().value() ? "ON" : "OFF");
-	}
-
-	auto warningsAsErrors = (*buildOptions).get()["warnings-as-errors"];
-	if (! warningsAsErrors)
-	{
-		partOfCmake += "option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              OFF)\n";
-	}
-	else
-	{
-		if (! (*warningsAsErrors).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The warnings-as-errors option in the build table must be a boolean"});
-		}
-
-		partOfCmake += std::format("option(ENABLE_WARNINGS_AS_ERRORS \"Treat warnings as errors\"              {})\n", (*warningsAsErrors).get().AsBool().value() ? "ON" : "OFF");
-	}
-
-	auto enableSanitizers = (*buildOptions).get()["enable-sanitizers"];
-	if (! enableSanitizers)
-	{
-		partOfCmake += "option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            OFF)\n";
-	}
-	else
-	{
-		if (! (*enableSanitizers).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-sanitizers option in the build table must be a boolean"});
-		}
-
-		partOfCmake += std::format("option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            {})\n", (*enableSanitizers).get().AsBool().value() ? "ON" : "OFF");
-	}
-
-	auto enableLto = (*buildOptions).get()["enable-lto"];
-	if (! enableLto)
-	{
-		partOfCmake += "option(ENABLE_LTO             \"Enable link-time optimization\"            OFF)\n";
-	}
-	else
-	{
-		if (! (*enableLto).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-lto option in the build table must be a boolean"});
-		}
-
-		partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", (*enableLto).get().AsBool().value() ? "ON" : "OFF");
-	}
-
-	auto enableCCache = (*buildOptions).get()["enable-ccache"];
-	if (! enableCCache)
-	{
-		partOfCmake += "option(ENABLE_CCACHE          \"Use ccache if available\"                  ON)\n";
-	}
-	else
-	{
-		if (! (*enableCCache).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-ccache option in the build table must be a boolean"});
-		}
-
-		partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n\n", (*enableCCache).get().AsBool().value() ? "ON" : "OFF");
-	}
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(const Config& config)
 {
-	std::string partOfCmake{};
-	auto testsOptions = toml["tests"];
-	if (! testsOptions)
+	if (! config.testsConfig)
 	{
 		return "";
 	}
-	else if (! (*testsOptions).get().IsObject())
-	{
-		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml. Is it a table?"});
-	}
 
-	auto enableTests = (*testsOptions).get()["enable-tests"];
-	if (! enableTests)
-	{
-		partOfCmake += "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         OFF)\n";
-	}
-	else
-	{
-		if (! (*enableTests).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-tests option in the tests table must be a boolean"});
-		}
+	std::string partOfCmake{};
 
-		partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", (*enableTests).get().AsBool().value() ? "ON" : "OFF");
-	}
+	partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", config.testsConfig->enableTests ? "ON" : "OFF");
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(const Config& config)
 {
 	std::string partOfCmake{};
-	auto exampleOptions = toml["examples"];
-	if (! exampleOptions)
+
+	if (! config.examplesConfig)
 	{
 		return "";
 	}
-	else if (! (*exampleOptions).get().IsObject())
-	{
-		return std::unexpected(CommandError{false, "Could not find the examples table in config.toml. Is it a table?"});
-	}
 
-	auto enableExamples = (*exampleOptions).get()["enable-examples"];
-	if (! enableExamples)
-	{
-		partOfCmake += "option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           OFF)\n";
-	}
-	else
-	{
-		if (! (*enableExamples).get().IsBool())
-		{
-			return std::unexpected(CommandError{false, "The enable-examples option in the examples table must be a boolean"});
-		}
+	partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", config.examplesConfig->enableExamples ? "ON" : "OFF");
 
-		partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", (*enableExamples).get().AsBool().value() ? "ON" : "OFF");
-	}
 
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructDependencies(const Marco::Toml& toml)
+std::expected<std::string, CommandError> BuildCommand::ConstructDependencies(const Config& config)
 {
 	std::string partOfCmake{};
-	
-	auto dependencies = toml["dependencies"];
-	if (! dependencies || ! (*dependencies).get().IsArray())
+
+	if (! config.dependenciesConfig)
 	{
 		return "";
 	}
-	
-	const Marco::TomlArray dependenciesArr = dependencies.value().get().AsArray().value().get();
 
-	for (const auto& dependency : dependenciesArr)
+	for (const auto& dependency : *config.dependenciesConfig)
 	{
-		auto libPackageName = dependency["find-package-name"];
-		if (libPackageName && libPackageName.value().get().IsString())
+		if (const auto* smallDependencyConfig = std::get_if<SmallDependencyConfig>(&dependency))
 		{
-			std::string libPackageNameString = libPackageName.value().get().AsString()->get();
 			partOfCmake += std::format(R"(
 find_package({0} REQUIRED)
 if(CAMKO_ALL_SOURCES)
@@ -545,66 +273,30 @@ if(CAMKO_ALL_SOURCES)
 else()
 	target_link_libraries(camko_core INTERFACE {0}::{0})
 endif()
-)", libPackageNameString);
+)", smallDependencyConfig->findPackageName);
 
 			partOfCmake.push_back('\n');
 			continue;
 		}
-		
-		auto libName = dependency["name"];
-		if (! libName || ! (*libName).get().IsString())
-		{
-			return std::unexpected(CommandError{false, "The name in the dependencies array does not exist or isnt a string"});
-		}
 
-		std::string libNameString = (*libName).get().AsString().value().get();
-		
-		auto libRepo = dependency["repo"];
-		if (! libRepo || ! (*libRepo).get().IsString())
-		{
-			return std::unexpected(CommandError{false, "The repo in the dependencies array does not exist or isnt a string"});
-		}
-
-		std::string libRepoString = (*libRepo).get().AsString().value().get();
-
-		auto libVersion = dependency["version"];
-		if (libVersion && !(*libVersion).get().IsString())
-		{
-			return std::unexpected(CommandError{false, "The version in the dependencies array isnt a string"});
-		}
-
-		auto libLinkTarget = dependency["link-target"];
-		if (libLinkTarget && ! (*libLinkTarget).get().IsString())
-		{
-			return std::unexpected(CommandError{false, "The link-target in the dependencies array isnt a string"});
-		}
-
-		std::string libLinkTargetString{};
-		if (libLinkTarget)
-		{
-			libLinkTargetString = libLinkTarget.value().get().AsString()->get();
-		}
-		else
-		{
-			libLinkTargetString = std::format("{}::{}", libNameString, libNameString);
-		}
+		const auto* regularDependencyConfig = std::get_if<RegularDependencyConfig>(&dependency);
 
 		partOfCmake += "include(FetchContent)\n\n";
 		partOfCmake += "FetchContent_Declare(\n";
-		partOfCmake += '\t' + libNameString + '\n';
-		partOfCmake += "\tGIT_REPOSITORY " + libRepoString + '\n';
+		partOfCmake += '\t' + regularDependencyConfig->name + '\n';
+		partOfCmake += "\tGIT_REPOSITORY " + regularDependencyConfig->repo + '\n';
 
-		if (libVersion)
+		if (! regularDependencyConfig->version.empty())
 		{
-			partOfCmake += "\tGIT_TAG " + libVersion.value().get().AsString().value().get() + '\n';
+			partOfCmake += "\tGIT_TAG " + regularDependencyConfig->version + '\n';
 		}
 
-		partOfCmake += ")\nFetchContent_MakeAvailable(" + libNameString + ")\n\n";
+		partOfCmake += ")\nFetchContent_MakeAvailable(" + regularDependencyConfig->name + ")\n\n";
 
 		partOfCmake += "if(CAMKO_ALL_SOURCES)\n";
-		partOfCmake += "\ttarget_link_libraries(camko_core PUBLIC " + libLinkTargetString + ")\n";
+		partOfCmake += "\ttarget_link_libraries(camko_core PUBLIC " + regularDependencyConfig->linkTarget + ")\n";
 		partOfCmake += "else()\n";
-		partOfCmake += "\ttarget_link_libraries(camko_core INTERFACE " + libLinkTargetString + ")\n";
+		partOfCmake += "\ttarget_link_libraries(camko_core INTERFACE " + regularDependencyConfig->linkTarget + ")\n";
 		partOfCmake += "endif()\n\n";
 	}
 

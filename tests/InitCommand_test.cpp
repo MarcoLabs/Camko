@@ -57,7 +57,7 @@ TEST_F(InitCommandTest, NoArgs_CreatesProjectInCurrentDirectory)
 	EXPECT_TRUE(std::filesystem::is_directory(this->m_tempDir / "include"));
 	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "src"));
 	EXPECT_TRUE(std::filesystem::is_directory(this->m_tempDir / "src"));
-	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "config.toml"));
+	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / defaults::kConfigFileName));
 	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "src" / "main.cpp"));
 }
 
@@ -66,7 +66,7 @@ TEST_F(InitCommandTest, NoArgs_ConfigTomlContentMatchesDefault)
 	CommandError result = this->m_command.Execute({});
 	ASSERT_TRUE(result.valid);
 
-	std::string content = Marco::ReadFile(this->m_tempDir / "config.toml");
+	std::string content = Marco::ReadFile(this->m_tempDir / defaults::kConfigFileName);
 	EXPECT_EQ(content, defaults::kDefaultConfigToml);
 }
 
@@ -87,7 +87,7 @@ TEST_F(InitCommandTest, WithProjectNameArg_CreatesProjectInNamedSubdirectory)
 	EXPECT_TRUE(std::filesystem::exists(projectPath / ".camko"));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "include"));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "src"));
-	EXPECT_TRUE(std::filesystem::exists(projectPath / "config.toml"));
+	EXPECT_TRUE(std::filesystem::exists(projectPath / defaults::kConfigFileName));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "src" / "main.cpp"));
 
 	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / ".camko"));
@@ -101,7 +101,7 @@ TEST_F(InitCommandTest, TooManyArgs_ReturnsErrorAndCreatesNothing)
 	EXPECT_EQ(result.message, "Too many arguments");
 
 	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / ".camko"));
-	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / "config.toml"));
+	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / defaults::kConfigFileName));
 }
 
 TEST_F(InitCommandTest, RunningTwiceWithNamedProject_ReturnsError)
