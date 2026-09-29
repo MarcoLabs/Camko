@@ -63,6 +63,21 @@ CommandError Config::Parse(const Marco::Toml& toml)
 	return CommandError{true, "No errors occured while parsing config"};
 }
 
+std::string Config::BuildTypeToString(BuildType type)
+{
+	switch (type)
+	{
+		case BuildType::Debug:
+			return "Debug";
+		case BuildType::Release:
+			return "Release";
+		case BuildType::MinSizeRel:
+			return "MinSizeRel";
+		case BuildType::RelWithDebInfo:
+			return "RelWithDebInfo";
+	}
+}
+
 std::expected<ProjectConfig, CommandError> Config::ParseProjectConfig(const Marco::Toml& toml)
 {
 	ProjectConfig config{};

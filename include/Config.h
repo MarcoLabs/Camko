@@ -86,6 +86,8 @@ public:
 
 	CommandError Parse(const std::filesystem::path& configFilepath);
 	CommandError Parse(const Marco::Toml& toml);
+	
+	static std::string BuildTypeToString(BuildType type);
 
 private:
 	Config();
@@ -96,4 +98,3 @@ private:
 	static std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
 	static std::expected<std::optional<ExamplesConfig>,                CommandError> ParseExamplesConfig(const Marco::Toml& toml);
 };
-
