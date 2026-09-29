@@ -58,6 +58,12 @@ struct RegularDependencyConfig
 	std::string linkTarget = std::format("{0}::{0}", name);
 };
 
+struct ExamplesConfig
+{
+	bool        enableExamples = false;
+	std::string examplesDirectory;
+};
+
 using DependencyConfig = std::variant<SmallDependencyConfig, RegularDependencyConfig>;
 
 class Config
@@ -74,8 +80,9 @@ public:
 	ProjectConfig projectConfig{};
 	BuildConfig   buildConfig{};
 	
-	std::optional<TestsConfig> testsConfig;
+	std::optional<TestsConfig>                   testsConfig;
 	std::optional<std::vector<DependencyConfig>> dependenciesConfig;
+	std::optional<ExamplesConfig>                examplesConfig;
 
 	CommandError Parse(const std::filesystem::path& configFilepath);
 	CommandError Parse(const Marco::Toml& toml);
@@ -83,9 +90,10 @@ public:
 private:
 	Config();
 
-	static std::expected<ProjectConfig, CommandError>                                ParseProjectConfig(const Marco::Toml& toml);
-	static std::expected<BuildConfig,   CommandError>                                ParseBuildConfig  (const Marco::Toml& toml);
-	static std::expected<std::optional<TestsConfig>,   CommandError>                 ParseTestsConfig(const Marco::Toml& toml);
+	static std::expected<ProjectConfig,                                CommandError> ParseProjectConfig(const Marco::Toml& toml);
+	static std::expected<BuildConfig,                                  CommandError> ParseBuildConfig  (const Marco::Toml& toml);
+	static std::expected<std::optional<TestsConfig>,                   CommandError> ParseTestsConfig(const Marco::Toml& toml);
 	static std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
+	static std::expected<std::optional<ExamplesConfig>,                CommandError> ParseExamplesConfig(const Marco::Toml& toml);
 };
 

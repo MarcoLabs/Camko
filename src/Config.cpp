@@ -266,3 +266,39 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 
 	return dependencies;
 }
+
+std::expected<std::optional<ExamplesConfig>,CommandError> Config::ParseExamplesConfig(const Marco::Toml& toml)
+{
+	auto examplesSettings = toml["examples"];
+	if (! examplesSettings || ! examplesSettings->get().IsObject())
+	{
+		return std::nullopt;
+	}
+
+	auto enableExamples = examplesSettings->get()["enable-examples"];
+	if (! enableExamples)
+	{
+		return std::nullopt;
+	}
+	else if (! enableExamples->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The enable-examples in the examples table isnt a bool"});
+	}
+
+	ExamplesConfig config{};
+
+	config.enableExamples = enableExamples->get().AsBool().value();
+
+	if (config.enableExamples)
+	{
+		auto examplesDirectory = examplesSettings->get()["examples-directory"];
+		if (! examplesDirectory || ! examplesDirectory->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "Could not find the examples-directory field in the tests table in config.toml"});
+		}
+
+		config.examplesDirectory = examplesDirectory->get().AsString()->get();
+	}
+
+	return config;
+}
