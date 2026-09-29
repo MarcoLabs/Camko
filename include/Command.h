@@ -2,8 +2,6 @@
 
 #include "CommandError.h"
 #include "Config.h"
-#include "marco/toml/Toml.h"
-#include <expected>
 #include <string>
 #include <vector>
 
@@ -17,7 +15,4 @@ public:
 
 	virtual CommandError Run(const Config& config, const std::vector<std::string>& args);
 	virtual CommandError PrintHelp(const Config& config);
-
-protected:
-	static std::expected<std::string, CommandError> GetProjectName(const Marco::Toml& toml);
 };
