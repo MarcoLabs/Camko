@@ -1,6 +1,7 @@
 #include "Config.h"
 #include "marco/toml/TomlReader.h"
 #include <fstream>
+#include <optional>
 
 Config& Config::Instance()
 {
@@ -163,12 +164,47 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	return config;
 }
 
-std::expected<TestsConfig, CommandError> Config::ParseTestsConfig(const Marco::Toml& toml)
+std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig(const Marco::Toml& toml)
 {
+	auto testsSettings = toml["tests"];
+	if (! testsSettings)
+	{
+		return std::nullopt;
+	}
+	else if (! testsSettings->get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the tests table in config.toml. Is it a table?"});
+	}
 
+	TestsConfig config{};
+
+	auto enableTests = testsSettings->get()["enable-tests"];
+	if (! enableTests)
+	{
+		config.enableTests = false;
+	}
+	else
+	{
+		if (! enableTests->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-tests option in the tests table must be a boolean"});
+		}
+
+		config.enableTests = enableTests->get().AsBool().value();
+	}
+
+	auto testsDirectory = testsSettings->get()["tests-directory"];
+	if (config.enableTests && (! testsDirectory || ! testsDirectory->get().IsString()))
+	{
+		return std::unexpected(CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"});
+	}
+	
+	config.testsDirectory = testsDirectory->get().AsString()->get();
+
+	return config;
 }
 
-std::expected<std::vector<DependencyConfig>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
+std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
 {
 
 }
