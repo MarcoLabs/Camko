@@ -69,8 +69,8 @@ using DependencyConfig = std::variant<SmallDependencyConfig, RegularDependencyCo
 class Config
 {
 public:
-	Config(Config&)           = delete;
-	Config operator=(Config&) = delete;
+	Config(const Config&)           = delete;
+	Config operator=(const Config&) = delete;
 	
 	Config(Config&&)           = delete;
 	Config operator=(Config&&) = delete;
@@ -90,7 +90,7 @@ public:
 	static std::string BuildTypeToString(BuildType type);
 
 private:
-	Config();
+	Config() = default;
 
 	static std::expected<ProjectConfig,                                CommandError> ParseProjectConfig(const Marco::Toml& toml);
 	static std::expected<BuildConfig,                                  CommandError> ParseBuildConfig  (const Marco::Toml& toml);

@@ -129,7 +129,7 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	}
 
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
-	if (buildSharedLibs && buildSharedLibs->get().IsBool())
+	if (buildSharedLibs && ! buildSharedLibs->get().IsBool())
 	{
 		return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
 	}
