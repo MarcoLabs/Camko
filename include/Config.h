@@ -21,6 +21,7 @@ struct ProjectConfig
 {
 	std::string name;
 	std::string version;
+	std::string description;
 };
 
 struct BuildConfig
@@ -75,10 +76,15 @@ public:
 	std::optional<TestsConfig> testsConfig;
 	std::optional<std::vector<DependencyConfig>> dependenciesConfig;
 
-	std::expected<Config, CommandError> Parse(const std::filesystem::path& configFilepath);
-	std::expected<Config, CommandError> Parse(const Marco::Toml& toml);
+	CommandError Parse(const std::filesystem::path& configFilepath);
+	CommandError Parse(const Marco::Toml& toml);
 
 private:
 	Config();
+
+	static std::expected<ProjectConfig, CommandError>                 ParseProjectConfig(const Marco::Toml& toml);
+	static std::expected<BuildConfig,   CommandError>                 ParseBuildConfig  (const Marco::Toml& toml);
+	static std::expected<TestsConfig,   CommandError>                 ParseTestsConfig(const Marco::Toml& toml);
+	static std::expected<std::vector<DependencyConfig>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
 };
 
