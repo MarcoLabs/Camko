@@ -96,12 +96,12 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 
 CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& projectPath)
 {
-	auto configTomlFile = CreateFile(projectPath / "config.toml");
+	auto configTomlFile = CreateFile(projectPath / defaults::kConfigFileName);
 	if (configTomlFile)
 	{
 		if (! configTomlFile.value().is_open())
 		{
-			return CommandError{false, "Could not create config.toml file"};
+			return CommandError{false, "Could not create the camko config file"};
 		}
 
 		*configTomlFile << defaults::kDefaultConfigToml;
