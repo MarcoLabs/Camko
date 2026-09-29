@@ -15,7 +15,7 @@ public:
 	virtual CommandError Execute(const Config& config, const std::vector<std::string>& args) = 0;
 	virtual std::string Name() const = 0;
 
-	virtual CommandError Run(const std::vector<std::string>& args);
+	virtual CommandError Run(const Config& config, const std::vector<std::string>& args);
 	virtual CommandError PrintHelp();
 
 protected:
