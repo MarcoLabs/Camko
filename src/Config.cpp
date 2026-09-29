@@ -198,7 +198,7 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 	{
 		return std::unexpected(CommandError{false, "Could not find the tests-directory field in the tests table in config.toml"});
 	}
-	
+
 	config.testsDirectory = testsDirectory->get().AsString()->get();
 
 	return config;
@@ -206,5 +206,63 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 
 std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
 {
+	auto dependenciesSettings = toml["dependencies"];
+	if (! dependenciesSettings || ! dependenciesSettings->get().IsArray())
+	{
+		return std::nullopt;
+	}
 
+	std::vector<DependencyConfig> dependencies{};
+	
+	const Marco::TomlArray dependenciesArr = dependenciesSettings->get().AsArray().value().get();
+	
+	for (const auto& dependency : dependenciesArr)
+	{
+		auto libPackageName = dependency["find-package-name"];
+		if (!libPackageName && libPackageName->get().IsString())
+		{
+			dependencies.push_back(SmallDependencyConfig{libPackageName->get().AsString()->get()});
+
+			continue;
+		}
+
+		RegularDependencyConfig config{};
+
+		auto name = dependency["name"];
+		if (! name || ! name->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The name in the dependencies array does not exist or isnt a string"});
+		}
+
+		config.name = name->get().AsString()->get();
+
+		auto repo = dependency["repo"];
+		if (! repo || ! repo->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The repo in the dependencies array does not exist or isnt a string"});
+		}
+
+		config.repo = repo->get().AsString()->get();
+
+		auto version = dependency["version"];
+		if (! version || ! version->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The version in the dependencies array does not exist or isnt a string"});
+		}
+
+		config.version = version->get().AsString()->get();
+
+		auto linkTarget = dependency["link-target"];
+		if (linkTarget)
+		{
+			if (! linkTarget->get().IsString())
+			{
+				return std::unexpected(CommandError{false, "The link-target in the dependencies array isnt a string"});
+			}
+
+			config.linkTarget = linkTarget->get().AsString()->get();
+		}
+	}
+
+	return dependencies;
 }
