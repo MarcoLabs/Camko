@@ -9,11 +9,11 @@
 #include <fstream>
 #include <iostream>
 
-CommandError RunCommand::Execute(const std::vector<std::string>& args)
+CommandError RunCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	const auto& commands = CommandRegistry::Instance();
 
-	CommandError error = commands.Find("build")->Execute(args);
+	CommandError error = commands.Find("build")->Execute(config, args);
 
 	if (!error.valid)
 	{

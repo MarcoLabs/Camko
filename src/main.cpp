@@ -41,7 +41,7 @@ int main(int argc, const char** argv)
 
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
-	CommandError error = command->Run(trimmedArgv);
+	CommandError error = command->Run(config, trimmedArgv);
 
 	if (!error.valid)
 	{

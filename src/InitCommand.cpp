@@ -10,7 +10,7 @@
 
 static std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath);
 
-CommandError InitCommand::Execute(const std::vector<std::string>& args)
+CommandError InitCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	std::string projectRootDir{};
 

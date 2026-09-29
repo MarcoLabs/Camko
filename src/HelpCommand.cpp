@@ -103,7 +103,7 @@ ARGS:
 )"}
 };
 
-CommandError HelpCommand::Execute(const std::vector<std::string>& args)
+CommandError HelpCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	if (args.size() > 1)
 	{
