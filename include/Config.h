@@ -4,6 +4,7 @@
 #include "marco/toml/Toml.h"
 #include <expected>
 #include <filesystem>
+#include <format>
 #include <optional>
 #include <string>
 #include <variant>
@@ -40,7 +41,7 @@ struct BuildConfig
 
 struct TestsConfig
 {
-	bool             enableTests;
+	bool        enableTests = false;
 	std::string testsDirectory;
 };
 
@@ -54,7 +55,7 @@ struct RegularDependencyConfig
 	std::string name;
 	std::string repo;
 	std::string version;
-	std::string linkTarget;
+	std::string linkTarget = std::format("{0}::{0}", name);
 };
 
 using DependencyConfig = std::variant<SmallDependencyConfig, RegularDependencyConfig>;
@@ -82,9 +83,9 @@ public:
 private:
 	Config();
 
-	static std::expected<ProjectConfig, CommandError>                 ParseProjectConfig(const Marco::Toml& toml);
-	static std::expected<BuildConfig,   CommandError>                 ParseBuildConfig  (const Marco::Toml& toml);
-	static std::expected<TestsConfig,   CommandError>                 ParseTestsConfig(const Marco::Toml& toml);
-	static std::expected<std::vector<DependencyConfig>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
+	static std::expected<ProjectConfig, CommandError>                                ParseProjectConfig(const Marco::Toml& toml);
+	static std::expected<BuildConfig,   CommandError>                                ParseBuildConfig  (const Marco::Toml& toml);
+	static std::expected<std::optional<TestsConfig>,   CommandError>                 ParseTestsConfig(const Marco::Toml& toml);
+	static std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
 };
 
