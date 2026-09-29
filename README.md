@@ -27,6 +27,7 @@
 	- [`[project]`](#project)
 	- [`[build]`](#build)
 	- [`[tests]`](#tests)
+	- [`[examples]`](#examples)
 	- [`[[dependencies]]`](#dependencies)
 - [Minimal `config.toml`](#minimal-configtoml)
 - [Full example `config.toml`](#full-example-configtoml)
@@ -113,6 +114,7 @@ my-app/
 ├── src/                 # source files (.cpp)
 ├── include/             # header files (.h)
 ├── tests/               # test files (*_test.cpp), if enabled
+├── examples/            # example programs (each with a main.cpp), if enabled
 └── .camko/              # generated CMake project — do not edit by hand
 		└── CMakeLists.txt
 ```
@@ -174,7 +176,9 @@ Builds the project and then runs the test suite.
 camko examples
 ```
 
-Builds and runs every example in the project's `examples/` directory.
+Builds and runs every example in the project's examples directory, as set by `[examples].examples-directory`.
+
+> **Note:** Examples are **disabled by default**. To use them, add an `[examples]` table to `config.toml` and set `enable-examples = true` - see [`[examples]`](#examples).
 
 - Each example is a subfolder containing its own `main.cpp` — this is what camko looks for to identify something as a runnable example. A folder without a `main.cpp` is not picked up.
 - Folders can be **nested** — `camko examples` walks the tree recursively, so you can organize examples into subcategories (e.g. `examples/networking/tcp/main.cpp`, `examples/networking/udp/main.cpp`) and they'll still be discovered.
@@ -195,7 +199,7 @@ camko --regenerate-config
 
 Resets `config.toml` back to the default minimal configuration (the same one `camko init` generates — see [Minimal `config.toml`](#minimal-configtoml)).
 
-- If `config.toml` already exists at the project root, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[[dependencies]]` entries, etc. — are discarded.
+- If `config.toml` already exists at the project root, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[examples]` settings, `[[dependencies]]` entries, etc. — are discarded.
 - If `config.toml` doesn't exist, it is created fresh at the project root with the same default contents.
 - This is a standalone flag, not tied to a specific subcommand — it doesn't build, run, or touch `.camko/`. It only writes `config.toml`.
 - Useful when a config has been hand-edited into an invalid or confusing state and you'd rather start over than fix it field by field.
@@ -279,6 +283,27 @@ enable-ccache = true
 enable-tests = false
 tests-directory = "tests"
 ```
+
+### `[examples]`
+
+The `[examples]` table is entirely optional. If it is omitted, examples are **disabled**.
+
+| Key                  | Type   | Default | Description |
+|----------------------|--------|---------|-------------|
+| `enable-examples`    | bool   | `false` | Enable building and running examples. Must be a boolean - any other type is a config error. |
+| `examples-directory` | string | —       | Directory containing the examples. **Required when `enable-examples = true`**; ignored otherwise. |
+
+- Examples are **disabled by default**. The table can exist without `enable-examples`, in which case examples stay disabled.
+- If `enable-examples` is present but is not a boolean, camko reports an error instead of falling back to the default.
+- If `enable-examples = true` and `examples-directory` is missing or is not a string, camko reports an error. There is no implicit fallback to `"examples"` once examples are enabled, so always set the directory explicitly.
+- When `enable-examples = false`, `examples-directory` is not read or validated.
+- Each example is a subfolder of `examples-directory` containing its own `main.cpp`; nested folders are discovered recursively. See [`camko examples`](#camko-examples).
+
+```toml
+[examples]
+enable-examples = true
+examples-directory = "examples"
+```
  
 ### `[[dependencies]]`
  
@@ -313,7 +338,7 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
  
 ## Minimal `config.toml`
  
-Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default. `[tests]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project, and what `camko --regenerate-config` writes back out:
+Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default. `[tests]`, `[examples]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project, and what `camko --regenerate-config` writes back out:
  
 ```toml
 [project]
@@ -349,6 +374,10 @@ enable-ccache = true       # Enable ccache when available
 [tests]
 enable-tests = false
 tests-directory = "tests"
+
+[examples]
+enable-examples = false      # disabled by default
+examples-directory = "examples" # required when enable-examples = true
  
 [[dependencies]]
 name = "fmt"

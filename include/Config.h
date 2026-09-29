@@ -60,8 +60,8 @@ struct RegularDependencyConfig
 
 struct ExamplesConfig
 {
-	bool        enableExamples = false;
-	std::string examplesDirectory;
+	bool        enableExamples    = false;
+	std::string examplesDirectory = "examples";
 };
 
 using DependencyConfig = std::variant<SmallDependencyConfig, RegularDependencyConfig>;
