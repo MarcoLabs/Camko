@@ -62,10 +62,10 @@ CommandError Config::Parse(const Marco::Toml& toml)
 	return CommandError{true, "No errors occured while parsing config"};
 }
 
-std::expected<ProjectConfig, CommandError> ParseProjectConfig(const Marco::Toml& toml)
+std::expected<ProjectConfig, CommandError> Config::ParseProjectConfig(const Marco::Toml& toml)
 {
 	ProjectConfig config{};
-	
+
 	auto projectSettings = toml["project"];
 	if (! projectSettings || ! (*projectSettings).get().IsObject())
 	{
@@ -102,17 +102,73 @@ std::expected<ProjectConfig, CommandError> ParseProjectConfig(const Marco::Toml&
 	return config;
 }
 
-std::expected<BuildConfig, CommandError> ParseBuildConfig  (const Marco::Toml& toml)
+std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::Toml& toml)
 {
-	
+	BuildConfig config{};
+
+	auto buildSettings = toml["build"];
+	if (! buildSettings || ! buildSettings->get().IsObject())
+	{
+		return std::unexpected(CommandError{false, "Could not find the build table in config.toml"});
+	}
+
+	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
+	if (buildSharedLibs && buildSharedLibs->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
+	}
+
+	config.buildSharedLibs = buildSharedLibs->get().AsBool().value();
+
+	auto enableWarnings = buildSettings->get()["enable-warnings"];
+	if (enableWarnings && enableWarnings->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The enable-warnings option in the build table must be a boolean"});
+	}
+
+	config.enableWarnings = enableWarnings->get().AsBool().value();
+
+	auto warningsAsErrors = buildSettings->get()["warnings-as-errors"];
+	if (warningsAsErrors && warningsAsErrors->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The warnings-as-errors option in the build table must be a boolean"});
+	}
+
+	config.warningsAsErrors = warningsAsErrors->get().AsBool().value();
+
+	auto enableSanitizers = buildSettings->get()["enable-sanitizers"];
+	if (enableSanitizers && enableSanitizers->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The enable-sanitizers option in the build table must be a boolean"});
+	}
+
+	config.enableSanitizers = enableSanitizers->get().AsBool().value();
+
+	auto enableLto = buildSettings->get()["enable-lto"];
+	if (enableLto && enableLto->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The enable-lto option in the build table must be a boolean"});
+	}
+
+	config.enableLto = enableLto->get().AsBool().value();
+
+	auto enableCCache = buildSettings->get()["enable-ccache"];
+	if (enableCCache && enableCCache->get().IsBool())
+	{
+		return std::unexpected(CommandError{false, "The enable-ccache option in the build table must be a boolean"});
+	}
+
+	config.enableCcache = enableCCache->get().AsBool().value();
+
+	return config;
 }
 
-std::expected<TestsConfig, CommandError> ParseTestsConfig(const Marco::Toml& toml)
+std::expected<TestsConfig, CommandError> Config::ParseTestsConfig(const Marco::Toml& toml)
 {
-	
+
 }
 
-std::expected<std::vector<DependencyConfig>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml)
+std::expected<std::vector<DependencyConfig>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
 {
-	
+
 }
