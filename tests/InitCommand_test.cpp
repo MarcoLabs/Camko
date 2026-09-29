@@ -38,6 +38,7 @@ protected:
 	std::filesystem::path m_originalCwd{};
 	std::filesystem::path m_tempDir{};
 	InitCommand m_command{};
+	const Config& m_config = Config::Instance();
 };
 
 TEST_F(InitCommandTest, NameReturnsInit)
@@ -47,7 +48,7 @@ TEST_F(InitCommandTest, NameReturnsInit)
 
 TEST_F(InitCommandTest, NoArgs_CreatesProjectInCurrentDirectory)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 
 	EXPECT_TRUE(result.valid);
 
@@ -63,7 +64,7 @@ TEST_F(InitCommandTest, NoArgs_CreatesProjectInCurrentDirectory)
 
 TEST_F(InitCommandTest, NoArgs_ConfigTomlContentMatchesDefault)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 	ASSERT_TRUE(result.valid);
 
 	std::string content = Marco::ReadFile(this->m_tempDir / defaults::kConfigFileName);
@@ -72,7 +73,7 @@ TEST_F(InitCommandTest, NoArgs_ConfigTomlContentMatchesDefault)
 
 TEST_F(InitCommandTest, NoArgs_mainCppContentMatchesDefault)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 	ASSERT_TRUE(result.valid);
 
 	std::string content = Marco::ReadFile(this->m_tempDir / "src" / "main.cpp");
@@ -81,7 +82,7 @@ TEST_F(InitCommandTest, NoArgs_mainCppContentMatchesDefault)
 
 TEST_F(InitCommandTest, WithProjectNameArg_CreatesProjectInNamedSubdirectory)
 {
-	CommandError result = this->m_command.Execute({"my_project"});
+	CommandError result = this->m_command.Execute(this->m_config, {"my_project"});
 
 	std::filesystem::path projectPath = this->m_tempDir / "my_project";
 	EXPECT_TRUE(std::filesystem::exists(projectPath / ".camko"));
@@ -95,7 +96,7 @@ TEST_F(InitCommandTest, WithProjectNameArg_CreatesProjectInNamedSubdirectory)
 
 TEST_F(InitCommandTest, TooManyArgs_ReturnsErrorAndCreatesNothing)
 {
-	CommandError result = this->m_command.Execute({"one", "two"});
+	CommandError result = this->m_command.Execute(this->m_config, {"one", "two"});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Too many arguments");
@@ -106,9 +107,9 @@ TEST_F(InitCommandTest, TooManyArgs_ReturnsErrorAndCreatesNothing)
 
 TEST_F(InitCommandTest, RunningTwiceWithNamedProject_ReturnsError)
 {
-	CommandError result = this->m_command.Execute({"my_project"});
+	CommandError result = this->m_command.Execute(this->m_config, {"my_project"});
 	ASSERT_TRUE(result.valid);
 	
-	result = this->m_command.Execute({"my_project"});
+	result = this->m_command.Execute(this->m_config, {"my_project"});
 	EXPECT_FALSE(result.valid);
 }
