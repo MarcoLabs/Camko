@@ -1,4 +1,5 @@
 #include "CommandRegistry.h"
+#include "Config.h"
 #include "Defaults.h"
 #include "Utils.h"
 #include <iostream>
@@ -17,6 +18,7 @@ int main(int argc, const char** argv)
 	}
 
 	const auto& commands = CommandRegistry::Instance();
+	Config& config       = Config::Instance();
 
 	if (!commands.Find(argv[1]))
 	{
@@ -24,6 +26,16 @@ int main(int argc, const char** argv)
 
 		return 1;
 	}
+
+	auto projectRoot = utils::GetCamkoProjectRootDirectory();
+	if (! projectRoot)
+	{
+		std::cout << projectRoot.error().message;
+		
+		return 1;
+	}
+
+	config.Parse(*projectRoot / defaults::kConfigFileName);
 
 	Command* command = commands.Find(argv[1]);
 

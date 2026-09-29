@@ -58,4 +58,6 @@ Run 'camko help <COMMAND>' for more information on a specific command.
 R"(CompileFlags:
 CompilationDatabase: .camko/build
 )";
+
+	inline constexpr std::string_view kConfigFileName = "config.toml";
 }
