@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommandError.h"
+#include "Config.h"
 #include "marco/toml/Toml.h"
 #include <expected>
 #include <string>
@@ -11,7 +12,7 @@ class Command
 public:
 	virtual ~Command() = default;
 	
-	virtual CommandError Execute(const std::vector<std::string>& args) = 0;
+	virtual CommandError Execute(const Config& config, const std::vector<std::string>& args) = 0;
 	virtual std::string Name() const = 0;
 
 	virtual CommandError Run(const std::vector<std::string>& args);
