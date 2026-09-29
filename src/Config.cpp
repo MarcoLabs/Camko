@@ -277,6 +277,10 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 
 			config.linkTarget = linkTarget->get().AsString()->get();
 		}
+		else
+		{
+			config.linkTarget = std::format("{0}::{0}", config.name);
+		}
 	}
 
 	return dependencies;

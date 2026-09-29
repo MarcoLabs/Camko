@@ -55,7 +55,7 @@ struct RegularDependencyConfig
 	std::string name;
 	std::string repo;
 	std::string version;
-	std::string linkTarget = std::format("{0}::{0}", name);
+	std::string linkTarget;
 };
 
 struct ExamplesConfig
