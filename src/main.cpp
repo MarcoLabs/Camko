@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "Defaults.h"
 #include "Utils.h"
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -30,12 +31,22 @@ int main(int argc, const char** argv)
 	auto projectRoot = utils::GetCamkoProjectRootDirectory();
 	if (! projectRoot)
 	{
-		std::cout << projectRoot.error().message;
-		
-		return 1;
-	}
+		if (std::strcmp(argv[1], "init") == 0)
+		{
+			config.Parse(defaults::kDefaultConfigToml);
+		}
+		else
+		{
+			std::cout << projectRoot.error().message << std::endl;
 
-	config.Parse(*projectRoot / defaults::kConfigFileName);
+			return 1;
+		}
+
+	}
+	else
+	{
+		config.Parse(*projectRoot / defaults::kConfigFileName);
+	}
 
 	Command* command = commands.Find(argv[1]);
 
@@ -94,7 +105,7 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 		{
 			std::cout << error.message << std::endl;
 		}
-		
+
 		return true;
 	}
 
