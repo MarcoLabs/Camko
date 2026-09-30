@@ -3,7 +3,6 @@
 #include "Utils/General.h"
 #include <filesystem>
 #include <iostream>
-#include <print>
 
 static bool IsExecutable(const std::filesystem::perms& permissions);
 
