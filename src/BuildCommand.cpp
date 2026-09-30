@@ -46,6 +46,14 @@ std::string BuildCommand::Name() const
 
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
+	ConfigureProject(projectRoot, config);
+	BuildCmakeProject(projectRoot);
+	
+	return CommandError{true, ""};
+}
+
+void BuildCommand::ConfigureProject(const std::filesystem::path& projectRoot, const Config& config)
+{
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = camkoDir / "build";
 
@@ -76,25 +84,19 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 	}
 
 	std::system(configureCmd.c_str());
+}
 
+void BuildCommand::BuildCmakeProject(const std::filesystem::path& projectRoot)
+{
+	const auto camkoDir = projectRoot / ".camko";
+	const auto buildDir = camkoDir / "build";
+	
 	std::string buildCmd = std::format(
 		"cmake --build \"{}\"",
 		buildDir.string()
 	);
 
 	std::system(buildCmd.c_str());
-
-	return CommandError{true, ""};
-}
-
-CommandError ConfigureProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
-{
-
-}
-
-CommandError BuildCmakeProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot)
-{
-
 }
 
 std::string BuildCommand::ConstructCMakeLists(const Config& config)

@@ -13,8 +13,9 @@ public:
 	std::string Name() const override;
 
 	static CommandError BuildProject     (const Config& config, const std::filesystem::path& projectRoot);
-	static CommandError ConfigureProject (const Config& config, const std::filesystem::path& projectRoot);
-	static CommandError BuildCmakeProject(const Config& config, const std::filesystem::path& projectRoot);
+	
+	static void         ConfigureProject (const std::filesystem::path& projectRoot, const Config& config);
+	static void         BuildCmakeProject(const std::filesystem::path& projectRoot);
 
 private:
 	static std::string ConstructCMakeLists             (const Config& config);
