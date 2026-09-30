@@ -17,8 +17,9 @@ public:
 	static void         ConfigureProject (const std::filesystem::path& projectRoot, const Config& config);
 	static void         BuildCmakeProject(const std::filesystem::path& projectRoot);
 
+	static void ConstructCMakeLists(const std::filesystem::path& projectRoot, const Config& config);
 private:
-	static std::string ConstructCMakeLists             (const Config& config);
+	
 	static std::string ConstructCMakeProjectDefinition (const Config& config);
 	static std::string ConstructCMakeLanguageStandard  (const Config& config);
 	static std::string ConstructUserConfigurableOptions(const Config& config);

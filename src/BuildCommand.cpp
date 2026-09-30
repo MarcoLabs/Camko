@@ -20,15 +20,7 @@ CommandError BuildCommand::Execute(const Config& config, const std::vector<std::
 
 	std::filesystem::path projectRoot = result.value();
 
-	std::string cMakeFileContents = ConstructCMakeLists(config);
-
-	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
-
-	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
-
-	cMakeListsFile << cMakeFileContents;
-
-	cMakeListsFile.close();
+	ConstructCMakeLists(projectRoot, config);
 
 	CommandError buildResult = BuildProject(config, projectRoot);
 	if (! buildResult.valid)
@@ -99,7 +91,7 @@ void BuildCommand::BuildCmakeProject(const std::filesystem::path& projectRoot)
 	std::system(buildCmd.c_str());
 }
 
-std::string BuildCommand::ConstructCMakeLists(const Config& config)
+void BuildCommand::ConstructCMakeLists(const std::filesystem::path& projectRoot, const Config& config)
 {
 	std::string fileContents{};
 
@@ -148,7 +140,12 @@ std::string BuildCommand::ConstructCMakeLists(const Config& config)
 	partOfCmake = ConstructInstallRules();
 	fileContents += partOfCmake;
 
-	return fileContents;
+	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
+	
+	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
+
+	cMakeListsFile << fileContents;
+	cMakeListsFile.close();
 }
 
 std::string BuildCommand::ConstructCMakeProjectDefinition(const Config& config)
