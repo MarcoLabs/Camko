@@ -56,7 +56,7 @@ Run 'camko help <COMMAND>' for more information on a specific command.
 
 	inline constexpr std::string_view kClangFile = 
 R"(CompileFlags:
-CompilationDatabase: .camko/build
+  CompilationDatabase: .camko/build
 )";
 
 	inline constexpr std::string_view kConfigFileName = "config.toml";

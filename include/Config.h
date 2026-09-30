@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -84,7 +85,7 @@ public:
 	std::optional<ExamplesConfig>                examplesConfig;
 
 	CommandError Parse(const std::filesystem::path& configFilepath);
-	CommandError Parse(const std::string& tomlString);
+	CommandError Parse(std::string_view tomlString);
 	CommandError Parse(const Marco::Toml& toml);
 	
 	static std::string BuildTypeToString(BuildType type);

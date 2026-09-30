@@ -33,7 +33,12 @@ int main(int argc, const char** argv)
 	{
 		if (std::strcmp(argv[1], "init") == 0)
 		{
-			config.Parse(defaults::kDefaultConfigToml);
+			CommandError result = config.Parse(defaults::kDefaultConfigToml);
+
+			std::cout << "Error message: " << result.message << std::endl;
+
+			std::cout << "Config: " << defaults::kDefaultConfigToml << std::endl;
+			std::cout << "config.name = " << config.projectConfig.name << std::endl;
 		}
 		else
 		{

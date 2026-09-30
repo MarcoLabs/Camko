@@ -26,6 +26,14 @@ CommandError Config::Parse(const std::filesystem::path& configFilepath)
 	return Parse(toml);
 }
 
+CommandError Config::Parse(std::string_view tomlString)
+{
+	Marco::TomlReader reader{};
+	Marco::Toml toml = reader.Parse(tomlString.data());
+
+	return Parse(toml);
+}
+
 CommandError Config::Parse(const Marco::Toml& toml)
 {
 	auto projectConfig = ParseProjectConfig(toml);
