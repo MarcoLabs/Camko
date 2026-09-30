@@ -2,7 +2,6 @@
 
 #include "Command.h"
 #include "CommandError.h"
-#include <expected>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -18,13 +17,13 @@ public:
 	static CommandError BuildCmakeProject(const Config& config, const std::filesystem::path& projectRoot);
 
 private:
-	static std::expected<std::string, CommandError> ConstructCMakeLists             (const Config& config);
-	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition (const Config& config);
-	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Config& config);
-	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Config& config);
-	static std::expected<std::string, CommandError> ConstructTestOptions            (const Config& config);
-	static std::expected<std::string, CommandError> ConstructExamplesOptions        (const Config& config);
-	static std::expected<std::string, CommandError> ConstructDependencies           (const Config& config);
+	static std::string ConstructCMakeLists             (const Config& config);
+	static std::string ConstructCMakeProjectDefinition (const Config& config);
+	static std::string ConstructCMakeLanguageStandard  (const Config& config);
+	static std::string ConstructUserConfigurableOptions(const Config& config);
+	static std::string ConstructTestOptions            (const Config& config);
+	static std::string ConstructExamplesOptions        (const Config& config);
+	static std::string ConstructDependencies           (const Config& config);
 
 	static std::string ConstructBuildType              ();
 	static std::string ConstructTooling                ();

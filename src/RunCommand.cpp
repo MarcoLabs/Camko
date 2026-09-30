@@ -4,7 +4,6 @@
 #include "Utils.h"
 #include <expected>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 
 CommandError RunCommand::Execute(const Config& config, const std::vector<std::string>& args)

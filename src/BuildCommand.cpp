@@ -20,17 +20,13 @@ CommandError BuildCommand::Execute(const Config& config, const std::vector<std::
 
 	std::filesystem::path projectRoot = result.value();
 
-	auto cMakeFileContents = ConstructCMakeLists(config);
-	if (! cMakeFileContents.has_value())
-	{
-		return cMakeFileContents.error();
-	}
+	std::string cMakeFileContents = ConstructCMakeLists(config);
 
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
 
 	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
 
-	cMakeListsFile << *cMakeFileContents;
+	cMakeListsFile << cMakeFileContents;
 
 	cMakeListsFile.close();
 
@@ -101,89 +97,59 @@ CommandError BuildCmakeProject(const Marco::Toml& toml, const std::filesystem::p
 
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLists(const Config& config)
+std::string BuildCommand::ConstructCMakeLists(const Config& config)
 {
 	std::string fileContents{};
 
-	auto partOfCmake = ConstructCMakeProjectDefinition(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	std::string partOfCmake = ConstructCMakeProjectDefinition(config);
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructCMakeLanguageStandard(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructUserConfigurableOptions(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructTestOptions(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructExamplesOptions(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructBuildType();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructTooling();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructPositionIndependentCode();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructCompilerWarnings();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructSantitizers();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructSourceFiles();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructDependencies(config);
-	if (! partOfCmake.has_value())
-	{
-		return std::unexpected(partOfCmake.error());
-	}
-
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructTesting();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructExamples();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	partOfCmake = ConstructInstallRules();
-	fileContents += *partOfCmake;
+	fileContents += partOfCmake;
 
 	return fileContents;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefinition(const Config& config)
+std::string BuildCommand::ConstructCMakeProjectDefinition(const Config& config)
 {
 	std::string partOfCmake{};
 
@@ -198,7 +164,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeProjectDefi
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageStandard(const Config& config)
+std::string BuildCommand::ConstructCMakeLanguageStandard(const Config& config)
 {
 	std::string partOfCmake{};
 
@@ -209,7 +175,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructCMakeLanguageSta
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurableOptions(const Config& config)
+std::string BuildCommand::ConstructUserConfigurableOptions(const Config& config)
 {
 	std::string partOfCmake{};
 
@@ -224,7 +190,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructUserConfigurable
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(const Config& config)
+std::string BuildCommand::ConstructTestOptions(const Config& config)
 {
 	if (! config.testsConfig)
 	{
@@ -238,7 +204,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructTestOptions(cons
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(const Config& config)
+std::string BuildCommand::ConstructExamplesOptions(const Config& config)
 {
 	std::string partOfCmake{};
 
@@ -253,7 +219,7 @@ std::expected<std::string, CommandError> BuildCommand::ConstructExamplesOptions(
 	return partOfCmake;
 }
 
-std::expected<std::string, CommandError> BuildCommand::ConstructDependencies(const Config& config)
+std::string BuildCommand::ConstructDependencies(const Config& config)
 {
 	std::string partOfCmake{};
 
