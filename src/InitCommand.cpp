@@ -2,7 +2,7 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
-#include "Utils/General.h"
+#include "Utils/OutputSupress.h"
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -52,6 +52,12 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 	}
 
 	result = AddGitIgnoreFile(projectPath);
+	if (! result.valid)
+	{
+		return result;
+	}
+
+	result = CreateClangdFile(projectPath);
 	if (! result.valid)
 	{
 		return result;
@@ -146,7 +152,7 @@ CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectP
 	return CommandError{true, "No errors occured"};
 }
 
-CommandError CreateClangdFile(const std::filesystem::path& projectPath)
+CommandError InitCommand::CreateClangdFile(const std::filesystem::path& projectPath)
 {
 	std::ofstream clangdFile(projectPath / ".clangd");
 	if (! clangdFile)
