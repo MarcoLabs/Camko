@@ -1,7 +1,7 @@
 #include "RunCommand.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <expected>
 #include <filesystem>
 #include <iostream>

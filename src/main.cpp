@@ -1,7 +1,7 @@
 #include "CommandRegistry.h"
 #include "Config.h"
 #include "Defaults.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <cstring>
 #include <iostream>
 #include <string>

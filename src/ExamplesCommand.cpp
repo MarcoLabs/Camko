@@ -1,6 +1,6 @@
 #include "ExamplesCommand.h"
 #include "CommandRegistry.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <filesystem>
 #include <iostream>
 #include <print>

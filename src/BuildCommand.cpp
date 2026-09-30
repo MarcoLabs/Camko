@@ -1,7 +1,7 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
 #include "Config.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <expected>
 #include <filesystem>
 #include <format>

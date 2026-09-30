@@ -1,6 +1,8 @@
 #include "InitCommand.h"
+#include "BuildCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
+#include "Utils/General.h"
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -54,6 +56,13 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 	{
 		return result;
 	}
+
+
+	utils::SuppressOutput([&]
+	{
+		BuildCommand::ConstructCMakeLists(projectPath, config);
+		BuildCommand::ConfigureProject(projectPath, config);
+	});
 
 	std::cout << "Successfully initialized new project under "
 			  << std::filesystem::canonical(projectPath).string() << std::endl;

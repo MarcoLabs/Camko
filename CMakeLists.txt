@@ -7,9 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 FetchContent_Declare(
-		marco
-		GIT_REPOSITORY https://github.com/MarcoLabs/MarcoLib.git
-		GIT_TAG main
+	marco
+	GIT_REPOSITORY https://github.com/MarcoLabs/MarcoLib.git
+	GIT_TAG main
 )
 
 set(MARCO_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -17,8 +17,13 @@ set(MARCO_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(marco)
 
+set(CAMKO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
 file(GLOB_RECURSE CAMKO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB_RECURSE CAMKO_HEADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
+file(GLOB_RECURSE CAMKO_HEADERS CONFIGURE_DEPENDS
+	"${CAMKO_INCLUDE_DIR}/*.h"
+	"${CAMKO_INCLUDE_DIR}/*.hpp"
+)
 
 list(FILTER CAMKO_SOURCES EXCLUDE REGEX ".*/main\\.cpp$")
 
@@ -26,7 +31,7 @@ if(CAMKO_SOURCES)
 	add_library(camko_core STATIC ${CAMKO_SOURCES} ${CAMKO_HEADERS})
 	target_include_directories(camko_core
 		PUBLIC
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+			$<BUILD_INTERFACE:${CAMKO_INCLUDE_DIR}>
 			$<INSTALL_INTERFACE:include>
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -36,21 +41,24 @@ if(CAMKO_SOURCES)
 else()
 	add_library(camko_core INTERFACE)
 	target_include_directories(camko_core INTERFACE
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+		$<BUILD_INTERFACE:${CAMKO_INCLUDE_DIR}>
 		$<INSTALL_INTERFACE:include>
 	)
 	target_link_libraries(camko_core INTERFACE marco)
 endif()
 
 add_executable(camko src/main.cpp)
+target_include_directories(camko PRIVATE ${CAMKO_INCLUDE_DIR})
 target_link_libraries(camko PRIVATE camko_core)
-target_compile_options(camko PRIVATE
-	-Wall -Wextra -Wpedantic
-)
+target_compile_options(camko PRIVATE -Wall -Wextra -Wpedantic)
 
 include(GNUInstallDirs)
 install(TARGETS camko
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(DIRECTORY ${CAMKO_INCLUDE_DIR}/
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
 )
 
 option(CAMKO_BUILD_EXAMPLES "Build camko example executables" OFF)

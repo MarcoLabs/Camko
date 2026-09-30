@@ -1,7 +1,7 @@
 #include "TestCommand.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <iostream>
 #include <string>
 #include <vector>
