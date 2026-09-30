@@ -129,52 +129,70 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	}
 
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
-	if (buildSharedLibs && ! buildSharedLibs->get().IsBool())
+	if (buildSharedLibs)
 	{
-		return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
-	}
+		if (! buildSharedLibs->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The build-shared-libs option in the build table must be a boolean"});
+		}
 
-	config.buildSharedLibs = buildSharedLibs->get().AsBool().value();
+		config.buildSharedLibs = buildSharedLibs->get().AsBool().value();
+	}
 
 	auto enableWarnings = buildSettings->get()["enable-warnings"];
-	if (enableWarnings && enableWarnings->get().IsBool())
+	if (enableWarnings)
 	{
-		return std::unexpected(CommandError{false, "The enable-warnings option in the build table must be a boolean"});
-	}
+		if (! enableWarnings->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-warnings option in the build table must be a boolean"});
+		}
 
-	config.enableWarnings = enableWarnings->get().AsBool().value();
+		config.enableWarnings = enableWarnings->get().AsBool().value();
+	}
 
 	auto warningsAsErrors = buildSettings->get()["warnings-as-errors"];
-	if (warningsAsErrors && warningsAsErrors->get().IsBool())
+	if (warningsAsErrors)
 	{
-		return std::unexpected(CommandError{false, "The warnings-as-errors option in the build table must be a boolean"});
-	}
+		if (! warningsAsErrors->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The warnings-as-errors option in the build table must be a boolean"});
+		}
 
-	config.warningsAsErrors = warningsAsErrors->get().AsBool().value();
+		config.warningsAsErrors = warningsAsErrors->get().AsBool().value();
+	}
 
 	auto enableSanitizers = buildSettings->get()["enable-sanitizers"];
-	if (enableSanitizers && enableSanitizers->get().IsBool())
+	if (enableSanitizers)
 	{
-		return std::unexpected(CommandError{false, "The enable-sanitizers option in the build table must be a boolean"});
-	}
+		if (! enableSanitizers->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-sanitizers option in the build table must be a boolean"});
+		}
 
-	config.enableSanitizers = enableSanitizers->get().AsBool().value();
+		config.enableSanitizers = enableSanitizers->get().AsBool().value();
+	}
 
 	auto enableLto = buildSettings->get()["enable-lto"];
-	if (enableLto && enableLto->get().IsBool())
+	if (enableLto)
 	{
-		return std::unexpected(CommandError{false, "The enable-lto option in the build table must be a boolean"});
-	}
+		if (! enableLto->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-lto option in the build table must be a boolean"});
+		}
 
-	config.enableLto = enableLto->get().AsBool().value();
+		config.enableLto = enableLto->get().AsBool().value();
+	}
 
 	auto enableCCache = buildSettings->get()["enable-ccache"];
-	if (enableCCache && enableCCache->get().IsBool())
+	if (enableCCache)
 	{
-		return std::unexpected(CommandError{false, "The enable-ccache option in the build table must be a boolean"});
-	}
+		if (! enableCCache->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The enable-ccache option in the build table must be a boolean"});
+		}
 
-	config.enableCcache = enableCCache->get().AsBool().value();
+		config.enableCcache = enableCCache->get().AsBool().value();
+	}
 
 	return config;
 }
@@ -228,9 +246,9 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 	}
 
 	std::vector<DependencyConfig> dependencies{};
-	
+
 	const Marco::TomlArray dependenciesArr = dependenciesSettings->get().AsArray().value().get();
-	
+
 	for (const auto& dependency : dependenciesArr)
 	{
 		auto libPackageName = dependency["find-package-name"];
