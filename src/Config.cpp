@@ -68,6 +68,14 @@ CommandError Config::Parse(const Marco::Toml& toml)
 	}
 
 	this->dependenciesConfig = *dependenciesConfig;
+	
+	auto examplesConfg = ParseExamplesConfig(toml);
+	if (! examplesConfig)
+	{
+		return examplesConfg.error();
+	}
+
+	this->examplesConfig = *examplesConfg;
 
 	return CommandError{true, "No errors occured while parsing config"};
 }
@@ -319,7 +327,7 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 	for (const auto& dependency : dependenciesArr)
 	{
 		auto libPackageName = dependency["find-package-name"];
-		if (!libPackageName && libPackageName->get().IsString())
+		if (libPackageName && libPackageName->get().IsString())
 		{
 			dependencies.push_back(SmallDependencyConfig{libPackageName->get().AsString()->get()});
 
@@ -370,6 +378,8 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 		{
 			config.linkTarget = std::format("{0}::{0}", config.name);
 		}
+
+		dependencies.push_back(config);
 	}
 
 	return dependencies;
