@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <system_error>
 #include <variant>
@@ -42,22 +41,32 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 {
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
-	
-	ConfigureProject (config, camkoDir, buildDir);
+
+	CommandError result = ConfigureProject (config, camkoDir, buildDir);
+	if (! result.valid)
+	{
+		return result;
+	}
+
 	BuildCmakeProject(buildDir);
-	
+
 	return CommandError{true, ""};
 }
 
-void BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
+CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
 {
-	std::error_code ec{};
-
-	if (! std::filesystem::create_directories(buildDir, ec) && ec)
+	if (! std::filesystem::exists(buildDir))
 	{
-		std::cout << std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message()) << std::endl;
-		
-		return;	
+		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path()); // buildDir.parent_path() returns the .camko/build folder
+		if (ec)
+		{
+			return CommandError{false, std::format("Error while trying to delete old build caches. Error message: {}", ec.message())};
+		}
+
+		if (! std::filesystem::create_directories(buildDir, ec) && ec)
+		{
+			return CommandError{false, std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message())};
+		}
 	}
 
 	std::string configureCmd = std::format(
@@ -89,6 +98,8 @@ void BuildCommand::ConfigureProject(const Config& config, const std::filesystem:
 	configureCmd += std::format(" -G \"{}\"", config.buildConfig.buildSystem);
 
 	std::system(configureCmd.c_str());
+
+	return CommandError{true, "No errors occured"};
 }
 
 void BuildCommand::BuildCmakeProject(const std::filesystem::path& buildDir)
@@ -151,7 +162,7 @@ void BuildCommand::ConstructCMakeLists(const std::filesystem::path& projectRoot,
 	fileContents += partOfCmake;
 
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
-	
+
 	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
 
 	cMakeListsFile << fileContents;

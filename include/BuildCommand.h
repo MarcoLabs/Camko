@@ -14,8 +14,8 @@ public:
 
 	static CommandError BuildProject     (const Config& config, const std::filesystem::path& projectRoot);
 	
-	static void ConfigureProject (const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir);
-	static void BuildCmakeProject(const std::filesystem::path& buildDir);
+	static CommandError ConfigureProject (const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir);
+	static void         BuildCmakeProject(const std::filesystem::path& buildDir);
 
 	static void ConstructCMakeLists(const std::filesystem::path& projectRoot, const Config& config);
 private:
