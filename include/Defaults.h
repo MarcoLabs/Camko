@@ -59,5 +59,5 @@ R"(CompileFlags:
   CompilationDatabase: .camko/build
 )";
 
-	inline constexpr std::string_view kConfigFileName = "config.toml";
+	inline constexpr std::string_view kConfigFileName = "camko.toml";
 }
