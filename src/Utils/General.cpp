@@ -11,7 +11,7 @@ std::expected<std::filesystem::path, CommandError> utils::GetCamkoProjectRootDir
 	std::filesystem::path currentPath = std::filesystem::current_path();
 
 	std::error_code error{};
-	
+
 	while (! currentPath.empty())
 	{
 		std::filesystem::path camkoDirPath = currentPath / ".camko";
@@ -56,10 +56,10 @@ std::filesystem::path utils::GetBuildFolderPath(const std::filesystem::path& pro
 	return projectRoot / ".camko" / "build" / buildSystem;
 }
 
-bool utils::RemoveAllFoldersFrom(const std::filesystem::path& path)
+std::error_code utils::RemoveAllFoldersFrom(const std::filesystem::path& path)
 {
 	std::error_code ec{};
-	
+
 	for (const auto& file : std::filesystem::directory_iterator(path, ec))
 	{
 		if (std::filesystem::is_directory(file))
@@ -68,10 +68,5 @@ bool utils::RemoveAllFoldersFrom(const std::filesystem::path& path)
 		}
 	}
 
-	if (ec)
-	{
-		return false;
-	}
-
-	return true;
+	return ec;
 }

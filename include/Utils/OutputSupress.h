@@ -20,10 +20,10 @@ namespace utils
 	};
 
 	template<typename Function>
-	void SuppressOutput(Function&& function)
+	decltype(auto) SuppressOutput(Function&& function)
 	{
 		OutputSuppressor suppressor;
 
-		std::invoke(std::forward<Function>(function));
+		return std::invoke(std::forward<Function>(function));
 	}
 }
