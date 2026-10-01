@@ -69,13 +69,13 @@ CommandError Config::Parse(const Marco::Toml& toml)
 
 	this->dependenciesConfig = *dependenciesConfig;
 	
-	auto examplesConfg = ParseExamplesConfig(toml);
+	auto examplesConfig = ParseExamplesConfig(toml);
 	if (! examplesConfig)
 	{
-		return examplesConfg.error();
+		return examplesConfig.error();
 	}
 
-	this->examplesConfig = *examplesConfg;
+	this->examplesConfig = *examplesConfig;
 
 	return CommandError{true, "No errors occured while parsing config"};
 }
@@ -201,7 +201,7 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 		return std::unexpected(CommandError{false, "The header-directory in the build table is required and must be a string"});
 	}
 
-	config.headerDirectory = buildSettings->get().AsString()->get();
+	config.headerDirectory = headerDirectory->get().AsString()->get();
 
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
 	if (buildSharedLibs)
@@ -301,8 +301,13 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 		config.enableTests = enableTests->get().AsBool().value();
 	}
 
+	if (! config.enableTests)
+	{
+		return config;
+	}
+
 	auto testsDirectory = testsSettings->get()["tests-directory"];
-	if (config.enableTests && (! testsDirectory || ! testsDirectory->get().IsString()))
+	if (! testsDirectory || ! testsDirectory->get().IsString())
 	{
 		return std::unexpected(CommandError{false, "Could not find the tests-directory field in the tests table in camko config"});
 	}
