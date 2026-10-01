@@ -50,3 +50,8 @@ CommandError utils::FillConfigFile(const std::string_view& content)
 
 	return CommandError{true, "No errors occured"};
 }
+
+std::filesystem::path utils::GetBuildFolderPath(const std::filesystem::path& projectRoot, const std::string& buildSystem)
+{
+	return projectRoot / ".camko" / "build" / buildSystem;
+}
