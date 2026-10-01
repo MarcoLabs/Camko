@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 static std::vector<std::string> TrimArgvFromFirstTwoElements(int argc, const char** argv); // first element is always camko and second is the option name
@@ -34,6 +35,11 @@ int main(int argc, const char** argv)
 		if (std::strcmp(argv[1], "init") == 0)
 		{
 			CommandError result = config.Parse(defaults::kDefaultConfigToml);
+
+			if (! result.valid)
+			{
+				std::unreachable();
+			}
 		}
 		else
 		{
