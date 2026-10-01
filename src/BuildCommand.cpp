@@ -41,7 +41,7 @@ std::string BuildCommand::Name() const
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
 	const auto camkoDir = projectRoot / ".camko";
-	const auto buildDir = camkoDir    / "build" / config.buildConfig.buildSystem;
+	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
 	
 	ConfigureProject (config, camkoDir, buildDir);
 	BuildCmakeProject(buildDir);
