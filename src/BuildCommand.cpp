@@ -6,7 +6,9 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <iostream>
 #include <string>
+#include <system_error>
 #include <variant>
 #include <vector>
 
@@ -38,16 +40,25 @@ std::string BuildCommand::Name() const
 
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
-	ConfigureProject(projectRoot, config);
-	BuildCmakeProject(projectRoot);
+	const auto camkoDir = projectRoot / ".camko";
+	const auto buildDir = camkoDir    / "build" / config.buildConfig.buildSystem;
+	
+	ConfigureProject (config, camkoDir, buildDir);
+	BuildCmakeProject(buildDir);
 	
 	return CommandError{true, ""};
 }
 
-void BuildCommand::ConfigureProject(const std::filesystem::path& projectRoot, const Config& config)
+void BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
 {
-	const auto camkoDir = projectRoot / ".camko";
-	const auto buildDir = camkoDir / "build";
+	std::error_code ec{};
+
+	if (! std::filesystem::create_directories(buildDir, ec) && ec)
+	{
+		std::cout << std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message()) << std::endl;
+		
+		return;	
+	}
 
 	std::string configureCmd = std::format(
 		"cmake -S \"{}\" -B \"{}\" "
@@ -75,14 +86,13 @@ void BuildCommand::ConfigureProject(const std::filesystem::path& projectRoot, co
 		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", config.examplesConfig->examplesDirectory);
 	}
 
+	configureCmd += std::format(" -G \"{}\"", config.buildConfig.buildSystem);
+
 	std::system(configureCmd.c_str());
 }
 
-void BuildCommand::BuildCmakeProject(const std::filesystem::path& projectRoot)
+void BuildCommand::BuildCmakeProject(const std::filesystem::path& buildDir)
 {
-	const auto camkoDir = projectRoot / ".camko";
-	const auto buildDir = camkoDir / "build";
-	
 	std::string buildCmd = std::format(
 		"cmake --build \"{}\"",
 		buildDir.string()

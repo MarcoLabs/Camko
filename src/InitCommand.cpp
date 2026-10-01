@@ -66,8 +66,11 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 
 	utils::SuppressOutput([&]
 	{
+		const auto camkoDir = projectPath / ".camko";
+		const auto buildDir = camkoDir    / "build" / config.buildConfig.buildSystem;
+		
 		BuildCommand::ConstructCMakeLists(projectPath, config);
-		BuildCommand::ConfigureProject(projectPath, config);
+		BuildCommand::ConfigureProject(config, camkoDir, buildDir);
 	});
 
 	std::cout << "Successfully initialized new project under "
