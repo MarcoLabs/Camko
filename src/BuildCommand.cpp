@@ -1,6 +1,7 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
 #include "Config.h"
+#include "Utils/Clangd.h"
 #include "Utils/General.h"
 #include <expected>
 #include <filesystem>
@@ -39,6 +40,8 @@ std::string BuildCommand::Name() const
 
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
+	utils::CreateClangdFile(projectRoot, config.buildConfig.buildSystem);
+	
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
 
@@ -68,7 +71,7 @@ CommandError BuildCommand::ConfigureProject(const Config& config, const std::fil
 			return CommandError{false, std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message())};
 		}
 	}
-
+	
 	std::string configureCmd = std::format(
 		"cmake -S \"{}\" -B \"{}\" "
 		"-DCMAKE_BUILD_TYPE={} "
