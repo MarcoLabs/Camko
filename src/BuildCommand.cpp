@@ -50,7 +50,7 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 
 	BuildCmakeProject(buildDir);
 
-	return CommandError{true, ""};
+	return CommandError{true, "No errors occured"};
 }
 
 CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
