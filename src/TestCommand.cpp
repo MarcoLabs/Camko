@@ -1,18 +1,16 @@
 #include "TestCommand.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
-#include "Utils.h"
-#include "marco/toml/TomlReader.h"
-#include <fstream>
+#include "Utils/General.h"
 #include <iostream>
 #include <string>
 #include <vector>
 
-CommandError TestCommand::Execute(const std::vector<std::string>& args)
+CommandError TestCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	const auto& commands = CommandRegistry::Instance();
 
-	CommandError error = commands.Find("build")->Execute(args);
+	CommandError error = commands.Find("build")->Execute(config, args);
 
 	if (!error.valid)
 	{
@@ -25,24 +23,7 @@ CommandError TestCommand::Execute(const std::vector<std::string>& args)
 		return projectRoot.error();
 	}
 
-	std::ifstream tomlFile(*projectRoot / "config.toml");
-	if (!tomlFile.is_open())
-	{
-		return CommandError{false, "Could not find the config.toml file"};
-	}
-
-	Marco::TomlReader reader{};
-	Marco::Toml toml = reader.Parse(tomlFile);
-
-	tomlFile.close();
-
-	auto projectName = GetProjectName(toml);
-	if (!projectName)
-	{
-		return projectName.error();
-	}
-
-	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / (*projectName + "_tests");
+	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / (config.projectConfig.name + "_tests");
 
 	std::cout << "\n\n";
 

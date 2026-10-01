@@ -38,6 +38,7 @@ protected:
 	std::filesystem::path m_originalCwd{};
 	std::filesystem::path m_tempDir{};
 	InitCommand m_command{};
+	const Config& m_config = Config::Instance();
 };
 
 TEST_F(InitCommandTest, NameReturnsInit)
@@ -47,7 +48,7 @@ TEST_F(InitCommandTest, NameReturnsInit)
 
 TEST_F(InitCommandTest, NoArgs_CreatesProjectInCurrentDirectory)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 
 	EXPECT_TRUE(result.valid);
 
@@ -57,22 +58,22 @@ TEST_F(InitCommandTest, NoArgs_CreatesProjectInCurrentDirectory)
 	EXPECT_TRUE(std::filesystem::is_directory(this->m_tempDir / "include"));
 	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "src"));
 	EXPECT_TRUE(std::filesystem::is_directory(this->m_tempDir / "src"));
-	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "config.toml"));
+	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / defaults::kConfigFileName));
 	EXPECT_TRUE(std::filesystem::exists(this->m_tempDir / "src" / "main.cpp"));
 }
 
 TEST_F(InitCommandTest, NoArgs_ConfigTomlContentMatchesDefault)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 	ASSERT_TRUE(result.valid);
 
-	std::string content = Marco::ReadFile(this->m_tempDir / "config.toml");
+	std::string content = Marco::ReadFile(this->m_tempDir / defaults::kConfigFileName);
 	EXPECT_EQ(content, defaults::kDefaultConfigToml);
 }
 
 TEST_F(InitCommandTest, NoArgs_mainCppContentMatchesDefault)
 {
-	CommandError result = this->m_command.Execute({});
+	CommandError result = this->m_command.Execute(this->m_config, {});
 	ASSERT_TRUE(result.valid);
 
 	std::string content = Marco::ReadFile(this->m_tempDir / "src" / "main.cpp");
@@ -81,13 +82,13 @@ TEST_F(InitCommandTest, NoArgs_mainCppContentMatchesDefault)
 
 TEST_F(InitCommandTest, WithProjectNameArg_CreatesProjectInNamedSubdirectory)
 {
-	CommandError result = this->m_command.Execute({"my_project"});
+	CommandError result = this->m_command.Execute(this->m_config, {"my_project"});
 
 	std::filesystem::path projectPath = this->m_tempDir / "my_project";
 	EXPECT_TRUE(std::filesystem::exists(projectPath / ".camko"));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "include"));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "src"));
-	EXPECT_TRUE(std::filesystem::exists(projectPath / "config.toml"));
+	EXPECT_TRUE(std::filesystem::exists(projectPath / defaults::kConfigFileName));
 	EXPECT_TRUE(std::filesystem::exists(projectPath / "src" / "main.cpp"));
 
 	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / ".camko"));
@@ -95,20 +96,20 @@ TEST_F(InitCommandTest, WithProjectNameArg_CreatesProjectInNamedSubdirectory)
 
 TEST_F(InitCommandTest, TooManyArgs_ReturnsErrorAndCreatesNothing)
 {
-	CommandError result = this->m_command.Execute({"one", "two"});
+	CommandError result = this->m_command.Execute(this->m_config, {"one", "two"});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Too many arguments");
 
 	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / ".camko"));
-	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / "config.toml"));
+	EXPECT_FALSE(std::filesystem::exists(this->m_tempDir / defaults::kConfigFileName));
 }
 
 TEST_F(InitCommandTest, RunningTwiceWithNamedProject_ReturnsError)
 {
-	CommandError result = this->m_command.Execute({"my_project"});
+	CommandError result = this->m_command.Execute(this->m_config, {"my_project"});
 	ASSERT_TRUE(result.valid);
 	
-	result = this->m_command.Execute({"my_project"});
+	result = this->m_command.Execute(this->m_config, {"my_project"});
 	EXPECT_FALSE(result.valid);
 }

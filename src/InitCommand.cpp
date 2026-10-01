@@ -1,6 +1,8 @@
 #include "InitCommand.h"
+#include "BuildCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
+#include "Utils/OutputSupress.h"
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -10,7 +12,7 @@
 
 static std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath);
 
-CommandError InitCommand::Execute(const std::vector<std::string>& args)
+CommandError InitCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	std::string projectRootDir{};
 
@@ -19,7 +21,7 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 		return CommandError{false, "Too many arguments"};
 	}
 
-	if (!args.empty())
+	if (! args.empty())
 	{
 		projectRootDir += args[0];
 
@@ -38,22 +40,35 @@ CommandError InitCommand::Execute(const std::vector<std::string>& args)
 	projectPath /= projectRootDir;
 
 	CommandError result = InitializeEmptyProject(projectPath);
-	if (!result.valid)
+	if (! result.valid)
 	{
 		return result;
 	}
 
 	result = FillConfigAndMainFile(projectPath);
-	if (!result.valid)
+	if (! result.valid)
 	{
 		return result;
 	}
 
 	result = AddGitIgnoreFile(projectPath);
-	if (!result.valid)
+	if (! result.valid)
 	{
 		return result;
 	}
+
+	result = CreateClangdFile(projectPath);
+	if (! result.valid)
+	{
+		return result;
+	}
+
+
+	utils::SuppressOutput([&]
+	{
+		BuildCommand::ConstructCMakeLists(projectPath, config);
+		BuildCommand::ConfigureProject(projectPath, config);
+	});
 
 	std::cout << "Successfully initialized new project under "
 			  << std::filesystem::canonical(projectPath).string() << std::endl;
@@ -69,24 +84,24 @@ std::string InitCommand::Name() const
 CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& projectPath)
 {
 	std::error_code ec{};
-	
+
 	bool result = std::filesystem::create_directories(projectPath / ".camko", ec);
 
-	if (!result && ec.value() != 0)
+	if (! result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "include", ec);
 
-	if (!result && ec.value() != 0)
+	if (! result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "src", ec);
 
-	if (!result && ec.value() != 0)
+	if (! result && ec.value() != 0)
 	{
 		return CommandError{false, "Could not initialize new project"};
 	}
@@ -96,14 +111,14 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 
 CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& projectPath)
 {
-	auto configTomlFile = CreateFile(projectPath / "config.toml");
+	auto configTomlFile = CreateFile(projectPath / defaults::kConfigFileName);
 	if (configTomlFile)
 	{
-		if (!configTomlFile.value().is_open())
+		if (! configTomlFile.value().is_open())
 		{
-			return CommandError{false, "Could not create config.toml file"};
+			return CommandError{false, "Could not create the camko config file"};
 		}
-		
+
 		*configTomlFile << defaults::kDefaultConfigToml;
 		(*configTomlFile).close();
 	}
@@ -111,11 +126,11 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 	auto mainFile = CreateFile(projectPath / "src/main.cpp");
 	if (mainFile)
 	{
-		if (!mainFile.value().is_open())
+		if (! mainFile.value().is_open())
 		{
 			return CommandError{false, "Could not create src/main.cpp file"};
 		}
-		
+
 		*mainFile << defaults::kDefaultMainCpp;
 		(*mainFile).close();
 	}
@@ -126,13 +141,27 @@ CommandError InitCommand::FillConfigAndMainFile(const std::filesystem::path& pro
 CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectPath)
 {
 	std::ofstream gitIgnoreFile(projectPath / ".gitignore");
-	if (!gitIgnoreFile)
+	if (! gitIgnoreFile)
 	{
 		return CommandError{false, "Could not create .gitignore file"};
 	}
 
 	gitIgnoreFile << defaults::kDefaultGitIgnore;
 	gitIgnoreFile.close();
+
+	return CommandError{true, "No errors occured"};
+}
+
+CommandError InitCommand::CreateClangdFile(const std::filesystem::path& projectPath)
+{
+	std::ofstream clangdFile(projectPath / ".clangd");
+	if (! clangdFile)
+	{
+		return CommandError{false, "Could not create .clangd file"};
+	}
+
+	clangdFile << defaults::kClangFile;
+	clangdFile.close();
 
 	return CommandError{true, "No errors occured"};
 }

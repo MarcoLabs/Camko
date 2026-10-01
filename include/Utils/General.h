@@ -1,8 +1,9 @@
 #pragma once
 
-#include "CommandError.h"
+#include "../CommandError.h"
 #include <expected>
 #include <filesystem>
+#include <string_view>
 
 namespace utils
 {

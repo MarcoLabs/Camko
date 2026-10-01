@@ -1,17 +1,16 @@
 #include "ExamplesCommand.h"
 #include "CommandRegistry.h"
-#include "Utils.h"
+#include "Utils/General.h"
 #include <filesystem>
 #include <iostream>
-#include <print>
 
 static bool IsExecutable(const std::filesystem::perms& permissions);
 
-CommandError ExamplesCommand::Execute(const std::vector<std::string>& args)
+CommandError ExamplesCommand::Execute(const Config& config, const std::vector<std::string>& args)
 {
 	const auto& commands = CommandRegistry::Instance();
 
-	CommandError error = commands.Find("build")->Execute(args);
+	CommandError error = commands.Find("build")->Execute(config, args);
 
 	if (! error.valid)
 	{

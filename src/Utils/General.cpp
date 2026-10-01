@@ -1,5 +1,6 @@
-#include "Utils.h"
+#include "Utils/General.h"
 #include "CommandError.h"
+#include "Defaults.h"
 #include "marco/utils/FileUtils.h"
 #include <expected>
 #include <filesystem>
@@ -45,7 +46,7 @@ CommandError utils::FillConfigFile(const std::string_view& content)
 		return projectRoot.error();
 	}
 
-	Marco::WriteFile(*projectRoot / "config.toml", content.data());
+	Marco::WriteFile(*projectRoot / defaults::kConfigFileName, content.data());
 
 	return CommandError{true, "No errors occured"};
 }

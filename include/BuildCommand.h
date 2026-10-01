@@ -2,8 +2,6 @@
 
 #include "Command.h"
 #include "CommandError.h"
-#include "marco/toml/Toml.h"
-#include <expected>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -11,18 +9,24 @@
 class BuildCommand : public Command
 {
 public:
-	CommandError Execute(const std::vector<std::string>& args) override;
+	CommandError Execute(const Config& config, const std::vector<std::string>& args) override;
 	std::string Name() const override;
 
-private:
-	static std::expected<std::string, CommandError> ConstructCMakeLists             (const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructCMakeProjectDefinition (const Marco::Toml& toml, const std::string& projectName);
-	static std::expected<std::string, CommandError> ConstructCMakeLanguageStandard  (const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructUserConfigurableOptions(const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructTestOptions            (const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructExamplesOptions        (const Marco::Toml& toml);
-	static std::expected<std::string, CommandError> ConstructDependencies           (const Marco::Toml& toml);
+	static CommandError BuildProject     (const Config& config, const std::filesystem::path& projectRoot);
 	
+	static void         ConfigureProject (const std::filesystem::path& projectRoot, const Config& config);
+	static void         BuildCmakeProject(const std::filesystem::path& projectRoot);
+
+	static void ConstructCMakeLists(const std::filesystem::path& projectRoot, const Config& config);
+private:
+	
+	static std::string ConstructCMakeProjectDefinition (const Config& config);
+	static std::string ConstructCMakeLanguageStandard  (const Config& config);
+	static std::string ConstructUserConfigurableOptions(const Config& config);
+	static std::string ConstructTestOptions            (const Config& config);
+	static std::string ConstructExamplesOptions        (const Config& config);
+	static std::string ConstructDependencies           (const Config& config);
+
 	static std::string ConstructBuildType              ();
 	static std::string ConstructTooling                ();
 	static std::string ConstructPositionIndependentCode();
@@ -33,5 +37,4 @@ private:
 	static std::string ConstructExamples               ();
 	static std::string ConstructInstallRules           ();
 
-	static CommandError BuildProject(const Marco::Toml& toml, const std::filesystem::path& projectRoot);
 };

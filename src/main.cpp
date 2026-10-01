@@ -1,9 +1,12 @@
 #include "CommandRegistry.h"
+#include "Config.h"
 #include "Defaults.h"
-#include "Utils.h"
+#include "Utils/General.h"
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 static std::vector<std::string> TrimArgvFromFirstTwoElements(int argc, const char** argv); // first element is always camko and second is the option name
@@ -17,6 +20,7 @@ int main(int argc, const char** argv)
 	}
 
 	const auto& commands = CommandRegistry::Instance();
+	Config& config       = Config::Instance();
 
 	if (!commands.Find(argv[1]))
 	{
@@ -25,11 +29,36 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 
+	auto projectRoot = utils::GetCamkoProjectRootDirectory();
+	if (! projectRoot)
+	{
+		if (std::strcmp(argv[1], "init") == 0)
+		{
+			CommandError result = config.Parse(defaults::kDefaultConfigToml);
+
+			if (! result.valid)
+			{
+				std::unreachable();
+			}
+		}
+		else
+		{
+			std::cout << projectRoot.error().message << std::endl;
+
+			return 1;
+		}
+
+	}
+	else
+	{
+		config.Parse(*projectRoot / defaults::kConfigFileName);
+	}
+
 	Command* command = commands.Find(argv[1]);
 
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
-	CommandError error = command->Run(trimmedArgv);
+	CommandError error = command->Run(config, trimmedArgv);
 
 	if (!error.valid)
 	{
@@ -82,7 +111,7 @@ bool TryHandleGlobalFlags(int argc, const char** argv)
 		{
 			std::cout << error.message << std::endl;
 		}
-		
+
 		return true;
 	}
 
