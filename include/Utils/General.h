@@ -11,4 +11,5 @@ namespace utils
 	CommandError FillConfigFile(const std::string_view& content); // requires a string with a null terminator
 
 	std::filesystem::path GetBuildFolderPath(const std::filesystem::path& projectRoot, const std::string& buildSystem);
+	bool RemoveAllFoldersFrom(const std::filesystem::path& path);
 }
