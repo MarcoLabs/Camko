@@ -83,6 +83,32 @@ std::string Config::BuildTypeToString(BuildType type)
 			return "MinSizeRel";
 		case BuildType::RelWithDebInfo:
 			return "RelWithDebInfo";
+		case BuildType::Invalid:
+			return "Invalid";
+	}
+}
+
+BuildType Config::StringToBuildType(const std::string& buildTypeString)
+{
+	if (buildTypeString == "Debug")
+	{
+		return BuildType::Debug;
+	}
+	else if (buildTypeString == "Release")
+	{
+		return BuildType::Release;
+	}
+	else if (buildTypeString == "MinSizeRel")
+	{
+		return BuildType::MinSizeRel;
+	}
+	else if (buildTypeString == "RelWithDebInfo")
+	{
+		return BuildType::RelWithDebInfo;
+	}
+	else
+	{
+		return BuildType::Invalid;
 	}
 }
 

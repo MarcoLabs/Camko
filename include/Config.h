@@ -15,7 +15,8 @@ enum class BuildType
 	Debug,
 	Release,
 	RelWithDebInfo,
-	MinSizeRel
+	MinSizeRel,
+	Invalid
 };
 
 struct ProjectConfig
@@ -89,6 +90,7 @@ public:
 	CommandError Parse(const Marco::Toml& toml);
 	
 	static std::string BuildTypeToString(BuildType type);
+	static BuildType   StringToBuildType(const std::string& buildTypeString);
 
 private:
 	Config() = default;
