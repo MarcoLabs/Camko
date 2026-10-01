@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "CommandError.h"
 #include "marco/toml/TomlReader.h"
 #include <fstream>
 #include <optional>
@@ -161,6 +162,38 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	{
 		return std::unexpected(CommandError{false, "Could not find the build table in camko config"});
 	}
+
+	auto type = buildSettings->get()["type"];
+	if (! type || ! type->get().IsString())
+	{
+		return std::unexpected(CommandError{false, "The build type in the build table is required and must be a string"});
+	}
+
+	config.type = Config::StringToBuildType(type->get().AsString()->get());
+
+	auto cppVersion = buildSettings->get()["cpp-version"];
+	if (! cppVersion || ! cppVersion->get().IsNumber())
+	{
+		return std::unexpected(CommandError{false, "The cpp-version in the build table is required and must be a nubmer"});
+	}
+
+	config.cppVersion = cppVersion->get().AsNumber().value();
+
+	auto sourceDirectory = buildSettings->get()["source-directory"];
+	if (! sourceDirectory || ! sourceDirectory->get().IsString())
+	{
+		return std::unexpected(CommandError{false, "The source-directory in the build table is required and must be a string"});
+	}
+
+	config.sourceDirectory = sourceDirectory->get().AsString()->get();
+
+	auto headerDirectory = buildSettings->get()["header-directory"];
+	if (! headerDirectory || ! headerDirectory->get().IsString())
+	{
+		return std::unexpected(CommandError{false, "The header-directory in the build table is required and must be a string"});
+	}
+
+	config.headerDirectory = buildSettings->get().AsString()->get();
 
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
 	if (buildSharedLibs)
