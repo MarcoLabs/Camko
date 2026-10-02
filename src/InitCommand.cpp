@@ -2,6 +2,7 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
 #include "Defaults.h"
+#include "Utils/Clangd.h"
 #include "Utils/OutputSupress.h"
 #include <filesystem>
 #include <format>
@@ -57,7 +58,7 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 		return result;
 	}
 
-	result = CreateClangdFile(projectPath);
+	result = utils::CreateClangdFile(projectPath, config.buildConfig.buildSystem);
 	if (! result.valid)
 	{
 		return result;
@@ -66,9 +67,18 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 
 	utils::SuppressOutput([&]
 	{
+		const auto camkoDir = projectPath / ".camko";
+		const auto buildDir = camkoDir    / "build" / config.buildConfig.buildSystem;
+		
 		BuildCommand::ConstructCMakeLists(projectPath, config);
-		BuildCommand::ConfigureProject(projectPath, config);
+		
+		result = BuildCommand::ConfigureProject(config, camkoDir, buildDir);
 	});
+
+	if (! result.valid)
+	{
+		return result;
+	}
 
 	std::cout << "Successfully initialized new project under "
 			  << std::filesystem::canonical(projectPath).string() << std::endl;
@@ -89,21 +99,28 @@ CommandError InitCommand::InitializeEmptyProject(const std::filesystem::path& pr
 
 	if (! result && ec.value() != 0)
 	{
-		return CommandError{false, "Could not initialize new project"};
+		return CommandError{false, std::format("Could not initialize new project. Error: {}", ec.message())};
+	}
+
+	result = std::filesystem::create_directory(projectPath / ".camko" / "build", ec);
+
+	if (! result && ec.value() != 0)
+	{
+		return CommandError{false, std::format("Could not initialize new project. Error: {}", ec.message())};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "include", ec);
 
 	if (! result && ec.value() != 0)
 	{
-		return CommandError{false, "Could not initialize new project"};
+		return CommandError{false, std::format("Could not initialize new project. Error: {}", ec.message())};
 	}
 
 	result = std::filesystem::create_directories(projectPath / "src", ec);
 
 	if (! result && ec.value() != 0)
 	{
-		return CommandError{false, "Could not initialize new project"};
+		return CommandError{false, std::format("Could not initialize new project. Error: {}", ec.message())};
 	}
 
 	return CommandError{true, "No errors occurred"};
@@ -148,20 +165,6 @@ CommandError InitCommand::AddGitIgnoreFile(const std::filesystem::path& projectP
 
 	gitIgnoreFile << defaults::kDefaultGitIgnore;
 	gitIgnoreFile.close();
-
-	return CommandError{true, "No errors occured"};
-}
-
-CommandError InitCommand::CreateClangdFile(const std::filesystem::path& projectPath)
-{
-	std::ofstream clangdFile(projectPath / ".clangd");
-	if (! clangdFile)
-	{
-		return CommandError{false, "Could not create .clangd file"};
-	}
-
-	clangdFile << defaults::kClangFile;
-	clangdFile.close();
 
 	return CommandError{true, "No errors occured"};
 }
