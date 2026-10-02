@@ -56,6 +56,14 @@ int main(int argc, const char** argv)
 
 	Command* command = commands.Find(argv[1]);
 
+	auto result = config.Parse(*projectRoot / defaults::kConfigFileName);
+	if (! result.valid)
+	{
+		std::cout << "Error in the config file: " << result.message << std::endl;
+
+		return 1;
+	}
+
 	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
 
 	CommandError error = command->Run(config, trimmedArgv);
