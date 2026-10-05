@@ -41,7 +41,7 @@ std::string BuildCommand::Name() const
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
 	utils::CreateClangdFile(projectRoot, config.buildConfig.buildSystem);
-	
+
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
 
@@ -71,7 +71,7 @@ CommandError BuildCommand::ConfigureProject(const Config& config, const std::fil
 			return CommandError{false, std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message())};
 		}
 	}
-	
+
 	std::string configureCmd = std::format(
 		"cmake -S \"{}\" -B \"{}\" "
 		"-DCMAKE_BUILD_TYPE={} "
@@ -445,6 +445,14 @@ target_link_libraries(camko_core
 		project_sanitizers
 )
 
+set(CAMKO_ARTIFACTS
+"[targets.${PROJECT_NAME}]
+type = \"executable\"
+path = \"$<TARGET_FILE:${PROJECT_NAME}>\"
+
+"
+)
+
 add_executable(${PROJECT_NAME} ${CAMKO_SOURCE_DIR}/main.cpp)
 
 target_link_libraries(${PROJECT_NAME}
@@ -507,6 +515,14 @@ if(CAMKO_ENABLE_TESTS)
 
 		add_executable(${PROJECT_NAME}_tests ${CAMKO_TEST_SOURCES})
 
+		string(APPEND CAMKO_ARTIFACTS
+"[targets.${PROJECT_NAME}_tests]
+type = \"test\"
+path = \"$<TARGET_FILE:${PROJECT_NAME}_tests>\"
+
+		"
+		)
+
 		target_link_libraries(${PROJECT_NAME}_tests
 			PRIVATE
 				camko_core
@@ -552,12 +568,32 @@ if(CAMKO_ENABLE_EXAMPLES)
 			"${CMAKE_CURRENT_SOURCE_DIR}/${CAMKO_EXAMPLES_PATH}"
 			"${CAMKO_EXAMPLE_SRC}"
 		)
-		get_filename_component(CAMKO_EXAMPLE_DIR "${CAMKO_EXAMPLE_REL}" DIRECTORY)
-		string(REPLACE "/" "_" CAMKO_EXAMPLE_NAME "${CAMKO_EXAMPLE_DIR}")
+
+		get_filename_component(CAMKO_EXAMPLE_DIR
+			"${CAMKO_EXAMPLE_REL}"
+			DIRECTORY
+		)
+
+		string(REPLACE "/" "_" CAMKO_EXAMPLE_NAME
+			"${CAMKO_EXAMPLE_DIR}"
+		)
+
 		set(CAMKO_EXAMPLE_TARGET "${CAMKO_EXAMPLE_NAME}_example")
 
 		add_executable(${CAMKO_EXAMPLE_TARGET} "${CAMKO_EXAMPLE_SRC}")
-		target_link_libraries(${CAMKO_EXAMPLE_TARGET} PRIVATE camko_core)
+
+		string(APPEND CAMKO_ARTIFACTS
+"[targets.${CAMKO_EXAMPLE_TARGET}]
+type = \"example\"
+path = \"$<TARGET_FILE:${CAMKO_EXAMPLE_TARGET}>\"
+
+		"
+		)
+
+		target_link_libraries(${CAMKO_EXAMPLE_TARGET}
+			PRIVATE
+				camko_core)
+
 		set_target_properties(${CAMKO_EXAMPLE_TARGET} PROPERTIES
 			RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/examples"
 		)
@@ -581,6 +617,20 @@ install(TARGETS ${PROJECT_NAME} camko_core
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+)";
+
+	partOfCmake.push_back('\n');
+
+	return partOfCmake;
+}
+
+std::string BuildCommand::ConstructArtifactsFiles()
+{
+	std::string partOfCmake = R"(
+file(GENERATE
+	OUTPUT "${CMAKE_BINARY_DIR}/../artifacts/$<CONFIG>.toml"
+	CONTENT "${CAMKO_ARTIFACTS}"
 )
 )";
 

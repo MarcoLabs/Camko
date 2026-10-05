@@ -36,5 +36,5 @@ private:
 	static std::string ConstructTesting                ();
 	static std::string ConstructExamples               ();
 	static std::string ConstructInstallRules           ();
-
+	static std::string ConstructArtifactsFiles         ();
 };
