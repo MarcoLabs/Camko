@@ -23,13 +23,13 @@ CommandError RunCommand::Execute(const Config& config, const std::vector<std::st
 		return projectRoot.error();
 	}
 
-	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / config.projectConfig.name;
+	std::filesystem::path executablePath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / config.projectConfig.name;
 	std::string runArguments = ConstructRunArguments(args);
 
 	std::cout << "\n\n";
 
-	std::string command = std::format("{} {}", executablePath.string(), runArguments);
-	
+	std::string command = std::format("\"{}\" {}", executablePath.string(), runArguments);
+
 	int errorCode = std::system(command.c_str());
 
 	if (errorCode == 0)

@@ -11,7 +11,7 @@ std::expected<std::filesystem::path, CommandError> utils::GetCamkoProjectRootDir
 	std::filesystem::path currentPath = std::filesystem::current_path();
 
 	std::error_code error{};
-	
+
 	while (! currentPath.empty())
 	{
 		std::filesystem::path camkoDirPath = currentPath / ".camko";
@@ -49,4 +49,24 @@ CommandError utils::FillConfigFile(const std::string_view& content)
 	Marco::WriteFile(*projectRoot / defaults::kConfigFileName, content.data());
 
 	return CommandError{true, "No errors occured"};
+}
+
+std::filesystem::path utils::GetBuildFolderPath(const std::filesystem::path& projectRoot, const std::string& buildSystem)
+{
+	return projectRoot / ".camko" / "build" / buildSystem;
+}
+
+std::error_code utils::RemoveAllFoldersFrom(const std::filesystem::path& path)
+{
+	std::error_code ec{};
+
+	for (const auto& file : std::filesystem::directory_iterator(path, ec))
+	{
+		if (std::filesystem::is_directory(file))
+		{
+			std::filesystem::remove_all(file);
+		}
+	}
+
+	return ec;
 }

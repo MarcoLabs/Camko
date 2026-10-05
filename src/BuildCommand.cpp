@@ -1,12 +1,14 @@
 #include "BuildCommand.h"
 #include "CommandError.h"
 #include "Config.h"
+#include "Utils/Clangd.h"
 #include "Utils/General.h"
 #include <expected>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <string>
+#include <system_error>
 #include <variant>
 #include <vector>
 
@@ -38,17 +40,38 @@ std::string BuildCommand::Name() const
 
 CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
 {
-	ConfigureProject(projectRoot, config);
-	BuildCmakeProject(projectRoot);
+	utils::CreateClangdFile(projectRoot, config.buildConfig.buildSystem);
 	
-	return CommandError{true, ""};
+	const auto camkoDir = projectRoot / ".camko";
+	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
+
+	CommandError result = ConfigureProject (config, camkoDir, buildDir);
+	if (! result.valid)
+	{
+		return result;
+	}
+
+	BuildCmakeProject(buildDir);
+
+	return CommandError{true, "No errors occured"};
 }
 
-void BuildCommand::ConfigureProject(const std::filesystem::path& projectRoot, const Config& config)
+CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
 {
-	const auto camkoDir = projectRoot / ".camko";
-	const auto buildDir = camkoDir / "build";
+	if (! std::filesystem::exists(buildDir))
+	{
+		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path()); // buildDir.parent_path() returns the .camko/build folder
+		if (ec)
+		{
+			return CommandError{false, std::format("Error while trying to delete old build caches. Error message: {}", ec.message())};
+		}
 
+		if (! std::filesystem::create_directories(buildDir, ec) && ec)
+		{
+			return CommandError{false, std::format("Could not create a subfolder at: {}\nError message: {}", std::filesystem::absolute(buildDir).string(), ec.message())};
+		}
+	}
+	
 	std::string configureCmd = std::format(
 		"cmake -S \"{}\" -B \"{}\" "
 		"-DCMAKE_BUILD_TYPE={} "
@@ -75,14 +98,15 @@ void BuildCommand::ConfigureProject(const std::filesystem::path& projectRoot, co
 		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", config.examplesConfig->examplesDirectory);
 	}
 
+	configureCmd += std::format(" -G \"{}\"", config.buildConfig.buildSystem);
+
 	std::system(configureCmd.c_str());
+
+	return CommandError{true, "No errors occured"};
 }
 
-void BuildCommand::BuildCmakeProject(const std::filesystem::path& projectRoot)
+void BuildCommand::BuildCmakeProject(const std::filesystem::path& buildDir)
 {
-	const auto camkoDir = projectRoot / ".camko";
-	const auto buildDir = camkoDir / "build";
-	
 	std::string buildCmd = std::format(
 		"cmake --build \"{}\"",
 		buildDir.string()
@@ -141,7 +165,7 @@ void BuildCommand::ConstructCMakeLists(const std::filesystem::path& projectRoot,
 	fileContents += partOfCmake;
 
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
-	
+
 	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
 
 	cMakeListsFile << fileContents;

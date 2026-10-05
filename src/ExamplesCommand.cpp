@@ -23,7 +23,7 @@ CommandError ExamplesCommand::Execute(const Config& config, const std::vector<st
 		return projectRoot.error();
 	}
 
-	std::filesystem::path examplesPath = *projectRoot / ".camko" / "build" / "examples";
+	std::filesystem::path examplesPath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / "examples";
 
 	error = RunAllExecutables(examplesPath.string());
 

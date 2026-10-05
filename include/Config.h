@@ -32,12 +32,14 @@ struct BuildConfig
 	int         cppVersion            = 23;
 	std::string sourceDirectory       = "src";
 	std::string headerDirectory       = "include";
-	bool             buildSharedLibs  = false;
-	bool             enableWarnings   = true;
-	bool             warningsAsErrors = false;
-	bool             enableSanitizers = false;
-	bool             enableLto        = false;
-	bool             enableCcache     = true;
+	
+	std::string buildSystem      = "Ninja";
+	bool        buildSharedLibs  = false;
+	bool        enableWarnings   = true;
+	bool        warningsAsErrors = false;
+	bool        enableSanitizers = false;
+	bool        enableLto        = false;
+	bool        enableCcache     = true;
 };
 
 struct TestsConfig

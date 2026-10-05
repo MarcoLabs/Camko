@@ -1,6 +1,7 @@
 #include "Config.h"
 #include "CommandError.h"
 #include "marco/toml/TomlReader.h"
+#include <expected>
 #include <fstream>
 #include <optional>
 
@@ -203,6 +204,17 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 
 	config.headerDirectory = headerDirectory->get().AsString()->get();
 
+	auto buildSystem = buildSettings->get()["build-system"];
+	if (buildSystem)
+	{
+		if (! buildSystem->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "The build-system option in the build table must be a string. Make sure it correctly corresponds to an available build system on your system"});
+		}
+
+		config.buildSystem = buildSystem->get().AsString()->get();
+	}
+	
 	auto buildSharedLibs = buildSettings->get()["build-shared-libs"];
 	if (buildSharedLibs)
 	{

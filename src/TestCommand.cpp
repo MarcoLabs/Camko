@@ -23,7 +23,7 @@ CommandError TestCommand::Execute(const Config& config, const std::vector<std::s
 		return projectRoot.error();
 	}
 
-	std::filesystem::path executablePath = *projectRoot / ".camko" / "build" / (config.projectConfig.name + "_tests");
+	std::filesystem::path executablePath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / (config.projectConfig.name + "_tests");
 
 	std::cout << "\n\n";
 
