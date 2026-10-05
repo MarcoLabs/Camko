@@ -61,7 +61,7 @@ CommandError ExamplesCommand::RunAllExecutables(const std::string& examplesPathD
 		}
 #endif
 
-		std::cout << "\033[32mRunning p.filename().string() <<  \033[0m" << std::endl;
+		std::cout << "\033[32mRunning " << p.filename().string() << " \033[0m" << std::endl;
 
 		std::string command = "\"" + p.string() + "\"";
 
