@@ -164,6 +164,9 @@ void BuildCommand::ConstructCMakeLists(const std::filesystem::path& projectRoot,
 	partOfCmake = ConstructInstallRules();
 	fileContents += partOfCmake;
 
+	partOfCmake = ConstructArtifactsFiles();
+	fileContents += partOfCmake;
+
 	std::filesystem::path camkoFolderPath = projectRoot / ".camko";
 
 	std::ofstream cMakeListsFile(camkoFolderPath / "CMakeLists.txt");
@@ -208,6 +211,10 @@ std::string BuildCommand::ConstructUserConfigurableOptions(const Config& config)
 	partOfCmake += std::format("option(ENABLE_SANITIZERS      \"Build with ASan/UBSan enabled\"            {})\n", config.buildConfig.enableSanitizers ? "ON" : "OFF");
 	partOfCmake += std::format("option(ENABLE_LTO             \"Enable link-time optimization\"            {})\n", config.buildConfig.enableLto ? "ON" : "OFF");
 	partOfCmake += std::format("option(ENABLE_CCACHE          \"Use ccache if available\"                  {})\n\n", config.buildConfig.enableCcache ? "ON" : "OFF");
+	
+	partOfCmake += "set(CAMKO_ARTIFACTS_DIR \"${CMAKE_SOURCE_DIR}/artifacts\" CACHE PATH \"Directory for Camko artifact metadata\")\n";
+
+	partOfCmake += "file(MAKE_DIRECTORY \"${CAMKO_ARTIFACTS_DIR}\")\n";
 
 
 	return partOfCmake;
@@ -629,7 +636,7 @@ std::string BuildCommand::ConstructArtifactsFiles()
 {
 	std::string partOfCmake = R"(
 file(GENERATE
-	OUTPUT "${CMAKE_BINARY_DIR}/../artifacts/$<CONFIG>.toml"
+	OUTPUT "${CAMKO_ARTIFACTS_DIR}/$<CONFIG>.toml"
 	CONTENT "${CAMKO_ARTIFACTS}"
 )
 )";
