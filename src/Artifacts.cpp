@@ -37,10 +37,51 @@ std::expected<Artifacts, CommandError> GetArtifactsByBuildType(BuildType type)
 		return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this."});
 	}
 
+	Artifacts artifacts{};
+	
 	auto& targets = toml["targets"];
 
-	for (auto& target : targets.AsObject()->get())
+	for (auto& [_, target] : targets.AsObject()->get())
 	{
-		
+		auto type = target["type"];
+		if (! type || ! type->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this. Error: with type not existing or not being a string"});
+		}
+
+		auto path = target["path"];
+		if (! path || ! path->get().IsString())
+		{
+			return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this. Error: with path not existing or not being a string"});
+		}
+
+		if (type->get().AsString()->get() == "executable")
+		{
+			if (! artifacts.mainExecutable.empty())
+			{
+				return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this. Error: more than one main executable file is not allowed"});
+			}
+
+			artifacts.mainExecutable = std::filesystem::path(path->get().AsString()->get());
+		}
+		else if (type->get().AsString()->get() == "test")
+		{
+			if (! artifacts.testsExecutable.empty())
+			{
+				return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this. Error: more than one tests executable file is not allowed"});
+			}
+
+			artifacts.testsExecutable = std::filesystem::path(path->get().AsString()->get());
+		}
+		else if (type->get().AsString()->get() == "example")
+		{
+			artifacts.examplesExecutables.push_back(std::filesystem::path(path->get().AsString()->get()));
+		}
+		else
+		{
+			return std::unexpected(CommandError{false, "Unexpected error in the artifacts. You shouldn't be seeing this. Error: type is malformed"});
+		}
 	}
+
+	return artifacts;
 }
