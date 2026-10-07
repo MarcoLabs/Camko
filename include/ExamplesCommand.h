@@ -11,5 +11,5 @@ public:
 	std::string Name() const override;
 
 private:
-	static CommandError RunAllExecutables(const std::string& examplesPathDir);
+	static CommandError RunAllExecutables(const std::vector<std::filesystem::path>& examples);
 };

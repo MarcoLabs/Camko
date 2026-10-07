@@ -1,4 +1,5 @@
 #include "RunCommand.h"
+#include "Artifacts.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
 #include "Utils/General.h"
@@ -23,12 +24,17 @@ CommandError RunCommand::Execute(const Config& config, const std::vector<std::st
 		return projectRoot.error();
 	}
 
-	std::filesystem::path executablePath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / config.projectConfig.name;
+	auto artifacts = GetArtifactsByBuildType(config.buildConfig.type);
+	if (! artifacts)
+	{
+		return artifacts.error();
+	}
+	
 	std::string runArguments = ConstructRunArguments(args);
 
 	std::cout << "\n\n";
 
-	std::string command = std::format("\"{}\" {}", executablePath.string(), runArguments);
+	std::string command = std::format("\"{}\" {}", artifacts->mainExecutable.string(), runArguments);
 
 	int errorCode = std::system(command.c_str());
 
