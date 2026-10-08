@@ -1,4 +1,5 @@
 #include "ExamplesCommand.h"
+#include "Artifacts.h"
 #include "CommandRegistry.h"
 #include "Utils/General.h"
 #include <filesystem>
@@ -23,9 +24,13 @@ CommandError ExamplesCommand::Execute(const Config& config, const std::vector<st
 		return projectRoot.error();
 	}
 
-	std::filesystem::path examplesPath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / "examples";
+	auto artifacts = GetArtifactsByBuildType(config.buildConfig.type);
+	if (! artifacts)
+	{
+		return artifacts.error();
+	}
 
-	error = RunAllExecutables(examplesPath.string());
+	error = RunAllExecutables(artifacts->examplesExecutables);
 
 	return error;
 }
@@ -35,35 +40,28 @@ std::string ExamplesCommand::Name() const
 	return "examples";
 }
 
-CommandError ExamplesCommand::RunAllExecutables(const std::string& examplesPathDir)
+CommandError ExamplesCommand::RunAllExecutables(const std::vector<std::filesystem::path>& examples)
 {
-	for (const auto& executable : std::filesystem::directory_iterator(examplesPathDir))
+	for (const auto& executable : examples)
 	{
 		std::cout << std::endl;
 
-		if (! executable.is_regular_file())
-		{
-			continue;
-		}
-
-		const std::filesystem::path& p = executable.path();
-
 #ifdef _WIN32
-		if (p.extension() != ".exe")
+		if (executable.extension() != ".exe")
 		{
 			continue;
 		}
 #else
-		auto permissions = std::filesystem::status(p).permissions();
+		auto permissions = std::filesystem::status(executable).permissions();
 		if (! IsExecutable(permissions))
 		{
 			continue;
 		}
 #endif
 
-		std::cout << "\033[32mRunning p.filename().string() <<  \033[0m" << std::endl;
+		std::cout << "\033[32mRunning " << executable.filename().string() << " \033[0m" << std::endl;
 
-		std::string command = "\"" + p.string() + "\"";
+		std::string command = "\"" + executable.string() + "\"";
 
 		int errorCode = std::system(command.c_str());
 

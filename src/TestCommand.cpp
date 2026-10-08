@@ -1,7 +1,9 @@
 #include "TestCommand.h"
+#include "Artifacts.h"
 #include "CommandError.h"
 #include "CommandRegistry.h"
 #include "Utils/General.h"
+#include <format>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -23,13 +25,15 @@ CommandError TestCommand::Execute(const Config& config, const std::vector<std::s
 		return projectRoot.error();
 	}
 
-	std::filesystem::path executablePath = utils::GetBuildFolderPath(*projectRoot, config.buildConfig.buildSystem) / (config.projectConfig.name + "_tests");
+	auto artifacts = GetArtifactsByBuildType(config.buildConfig.type);
+	if (! artifacts)
+	{
+		return artifacts.error();
+	}
 
 	std::cout << "\n\n";
 
-	std::string command = executablePath.string();
-
-	int errorCode = std::system(command.c_str());
+	int errorCode = std::system(std::format("\"{}\"", artifacts->testsExecutable.string()).c_str());
 
 	if (errorCode == 0)
 	{
