@@ -455,7 +455,7 @@ target_link_libraries(camko_core
 set(CAMKO_ARTIFACTS
 "[targets.${PROJECT_NAME}]
 type = \"executable\"
-path = \"$<TARGET_FILE:${PROJECT_NAME}>\"
+path = '''$<TARGET_FILE:${PROJECT_NAME}>'''
 
 "
 )
@@ -525,7 +525,7 @@ if(CAMKO_ENABLE_TESTS)
 		string(APPEND CAMKO_ARTIFACTS
 "[targets.${PROJECT_NAME}_tests]
 type = \"test\"
-path = \"$<TARGET_FILE:${PROJECT_NAME}_tests>\"
+path = '''$<TARGET_FILE:${PROJECT_NAME}_tests>'''
 
 		"
 		)
@@ -592,7 +592,7 @@ if(CAMKO_ENABLE_EXAMPLES)
 		string(APPEND CAMKO_ARTIFACTS
 "[targets.${CAMKO_EXAMPLE_TARGET}]
 type = \"example\"
-path = \"$<TARGET_FILE:${CAMKO_EXAMPLE_TARGET}>\"
+path = '''$<TARGET_FILE:${CAMKO_EXAMPLE_TARGET}>'''
 
 		"
 		)
