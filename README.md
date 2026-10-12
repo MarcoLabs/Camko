@@ -11,7 +11,7 @@
 ---
 
 ## Table of contents
- 
+
 - [Installation](#installation)
 - [Quick start](#quick-start)
 - [Project structure](#project-structure)
@@ -28,6 +28,7 @@
 	- [`[build]`](#build)
 	- [`[tests]`](#tests)
 	- [`[examples]`](#examples)
+	- [`[extras]`](#extras)
 	- [`[[dependencies]]`](#dependencies)
 - [Minimal `camko.toml`](#minimal-configtoml)
 - [Full example `camko.toml`](#full-example-configtoml)
@@ -212,7 +213,7 @@ camko --regenerate-config
 
 Resets `camko.toml` back to the default minimal configuration (the same one `camko init` generates — see [Minimal `camko.toml`](#minimal-configtoml)).
 
-- If `camko.toml` already exists at the project root, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[examples]` settings, `[[dependencies]]` entries, etc. — are discarded.
+- If `camko.toml` already exists at the project root, it is **overwritten in place** with the default minimal config. Any customizations you made — build options, `[tests]` settings, `[examples]` settings, `[extras]` settings, `[[dependencies]]` entries, etc. — are discarded.
 - If `camko.toml` doesn't exist, it is created fresh at the project root with the same default contents.
 - This is a standalone flag, not tied to a specific subcommand — it doesn't build, run, or touch `.camko/`. It only writes `camko.toml`.
 - Useful when a config has been hand-edited into an invalid or confusing state and you'd rather start over than fix it field by field.
@@ -246,15 +247,15 @@ camko help build
 |-----------|--------|---------------------------------------|
 | `name`    | string | Name of the project / executable.    |
 | `version` | string | Project version (e.g. `"0.1.0"`).    |
- 
+
 ```toml
 [project]
 name = "main"
 version = "0.1.0"
 ```
- 
+
 ### `[build]`
- 
+
 | Key                  | Type    | Default   | Description |
 |----------------------|---------|-----------|-------------|
 | `type`               | string  | `"Debug"` | CMake build type: `Debug`, `Release`, `RelWithDebInfo`, or `MinSizeRel`. |
@@ -268,7 +269,7 @@ version = "0.1.0"
 | `enable-sanitizers`  | bool    | `false`   | Build with AddressSanitizer/UndefinedBehaviorSanitizer enabled. |
 | `enable-lto`         | bool    | `false`   | Enable link-time optimization. |
 | `enable-ccache`      | bool    | `true`    | Use `ccache` for compilation when it's available on the system. |
- 
+
 ```toml
 [build]
 type = "Debug"
@@ -298,17 +299,17 @@ build-system = "Unix Makefiles"
 - Ninja is the default, but it is not bundled with CMake. Install it separately (see [Requirements](#installation)) or set `build-system` to a generator you already have.
 - Whichever build system you pick has to be installed and on your `PATH`; camko does not install it for you.
 - Each build system gets its own build directory inside `.camko/build/`, named after the value of `build-system`: `.camko/build/Ninja` for `"Ninja"`, `.camko/build/Unix Makefiles` for `"Unix Makefiles"`, and so on. Note the directory name keeps the generator's exact spelling, spaces included.
-- Changing `build-system` **discards all previous caches**. When you switch to a different build system, the CMake caches and build output of the previous build systems are thrown away, and the project is built from scratch with the new one. Expect a full rebuild after every change, including when you switch back to a build system you used before - nothing is kept from earlier builds.
- 
+- By default, changing `build-system` **discards all previous caches**. When you switch to a different build system, the CMake caches and build output of the previous build systems are thrown away, and the project is built from scratch with the new one. Expect a full rebuild after every change, including when you switch back to a build system you used before - nothing is kept from earlier builds. To keep the build files of previous build systems instead, enable [`preserve-cache`](#extras) in the `[extras]` table.
+
 ### `[tests]`
- 
+
 | Key               | Type   | Default     | Description |
 |-------------------|--------|-------------|-------------|
 | `enable-tests`    | bool   | `false`     | Enable building and registering tests. |
 | `tests-directory` | string | `"tests"`   | Directory containing test files. Files must follow the `*_test.cpp` naming convention. |
 
 > Tests are built with **Google Test** - this is the only supported testing framework and is not configurable. Only files ending in `_test.cpp` inside `tests-directory` are picked up. Note that `camko test` (see [Commands](#camko-test)) does not currently check `enable-tests` before attempting to run tests.
- 
+
 ```toml
 [tests]
 enable-tests = false
@@ -335,11 +336,32 @@ The `[examples]` table is entirely optional. If it is omitted, examples are **di
 enable-examples = true
 examples-directory = "examples"
 ```
- 
+
+### `[extras]`
+
+The `[extras]` table is entirely optional. It holds additional options that don't belong to any other table. Currently it has a single option.
+
+| Key              | Type | Default | Description |
+|------------------|------|---------|-------------|
+| `preserve-cache` | bool | `false` | When `true`, the build files of build systems you are no longer using are kept in `.camko/build/` after you change `build-system`, instead of being deleted. |
+
+```toml
+[extras]
+preserve-cache = false
+```
+
+By default (`preserve-cache = false`), changing `build-system` throws away the caches and build output of every previous build system (see [Choosing a build system](#choosing-a-build-system)). With `preserve-cache = true`, they stay on disk.
+
+For example:
+
+1. You set `preserve-cache = true` and build the project with `build-system = "Unix Makefiles"`. The build files live in `.camko/build/Unix Makefiles`.
+2. You change `build-system` to `"Ninja Multi-Config"` and build again. The `.camko/build/Unix Makefiles` directory is **not** deleted and stays next to the new `.camko/build/Ninja Multi-Config` directory.
+3. You set `preserve-cache` back to `false` and build again. The unused `.camko/build/Unix Makefiles` directory is now deleted, since it doesn't belong to the current build system.
+
 ### `[[dependencies]]`
- 
+
 Dependencies are declared as an array of tables and are fetched via CMake's `FetchContent`. Each entry pulls a dependency straight from a Git repository at a given tag/commit — there's no separate lock file or package manager involved.
- 
+
 | Key                 | Type   | Required | Description |
 |---------------------|--------|----------|-------------|
 | `name`              | string | yes      | A label for the dependency (used internally by `FetchContent`). |
@@ -347,14 +369,14 @@ Dependencies are declared as an array of tables and are fetched via CMake's `Fet
 | `version`           | string | yes      | Git tag, branch, or commit SHA to fetch. Pinning to a commit SHA is recommended for reproducible builds. |
 | `link-target`       | string | no       | The CMake target to link against, e.g. `fmt::fmt`. If omitted, defaults to `[name]::[name]`. |
 | `find-package-name` | string | no       | The name to use when the dependency is resolved via `find_package` instead of being fetched (e.g. when it's already installed via a system package manager). Only needed in that case. |
- 
+
 ```toml
 [[dependencies]]
 name = "fmt"
 repo = "https://github.com/fmtlib/fmt.git"
 version = "10.2.1"
 link-target = "fmt::fmt" # if omitted, automatically becomes [name]::[name]
- 
+
 [[dependencies]]
 name = "json"
 repo = "https://github.com/nlohmann/json.git"
@@ -362,34 +384,34 @@ version = "v3.11.3"
 link-target = "nlohmann_json::nlohmann_json"
 find-package-name = "nlohmann_json" # only needed if installed using a package manager
 ```
- 
+
 > **Note:** A library's `FetchContent` name and its actual CMake link target are two different things. If you're not sure what target a dependency exports, check its README, look for `add_library`/`ALIAS` definitions in its `CMakeLists.txt`, or run `cmake --build build --target help` after fetching it.
- 
+
 ---
- 
+
 ## Minimal `camko.toml`
- 
-Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default (including `build-system`, which defaults to `"Ninja"`). `[tests]`, `[examples]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project, and what `camko --regenerate-config` writes back out:
- 
+
+Everything under `[build]` besides `type`, `cpp-version`, `source-directory`, and `header-directory` is optional and will fall back to its default (including `build-system`, which defaults to `"Ninja"`). `[tests]`, `[examples]`, `[extras]` and `[[dependencies]]` are entirely optional. This is the minimal config `camko init` generates for a new project, and what `camko --regenerate-config` writes back out:
+
 ```toml
 [project]
 name = "main"
 version = "0.1.0"
- 
+
 [build]
 type = "Debug" # Debug | Release | RelWithDebInfo | MinSizeRel
 cpp-version = 23
 source-directory = "src"
 header-directory = "include"
 ```
- 
+
 ## Full example `camko.toml`
- 
+
 ```toml
 [project]
 name = "main"
 version = "0.1.0"
- 
+
 [build]
 type = "Debug" # Debug | Release | RelWithDebInfo | MinSizeRel
 cpp-version = 23
@@ -402,7 +424,7 @@ warnings-as-errors = false
 enable-sanitizers = false  # Build with ASan/UBSan enabled
 enable-lto = false         # Enable link-time optimization
 enable-ccache = true       # Enable ccache when available
- 
+
 [tests]
 enable-tests = false
 tests-directory = "tests"
@@ -410,13 +432,16 @@ tests-directory = "tests"
 [examples]
 enable-examples = false      # disabled by default
 examples-directory = "examples" # required when enable-examples = true
- 
+
+[extras]
+preserve-cache = false       # keep build files of previous build systems when true
+
 [[dependencies]]
 name = "fmt"
 repo = "https://github.com/fmtlib/fmt.git"
 version = "10.2.1"
 link-target = "fmt::fmt" # if omitted, automatically becomes [name]::[name]
- 
+
 [[dependencies]]
 name = "json"
 repo = "https://github.com/nlohmann/json.git"
@@ -424,14 +449,14 @@ version = "v3.11.3"
 link-target = "nlohmann_json::nlohmann_json"
 find-package-name = "nlohmann_json" # only needed if installed using a package manager
 ```
- 
+
 ---
- 
+
 ## How it works
 
 1. `camko` parses `camko.toml` from your project root.
 2. It generates a `CMakeLists.txt` inside `.camko/`, translating each `camko.toml` section into the corresponding CMake set up: project definition, C++ standard, build type, tooling, (ccache, `compile_commands.json`), warnings, sanitizers, LTO, dependencies (via `FetchContent`), source globbing, test registration, and install rules.
-3. CMake is invoked with `.camko` as the source root (`-S .camko`) and the build system from `build-system` as its generator (`Ninja` unless configured otherwise), so all paths to your actual  `src/`/`include/`/`tests/` directories are resolved one level up from there. Build output goes into `.camko/build/`, in a subdirectory named after the build system (`.camko/build/Ninja`, `.camko/build/Unix Makefiles`, ...), and changing `build-system` discards the caches of the previous build systems.
+3. CMake is invoked with `.camko` as the source root (`-S .camko`) and the build system from `build-system` as its generator (`Ninja` unless configured otherwise), so all paths to your actual  `src/`/`include/`/`tests/` directories are resolved one level up from there. Build output goes into `.camko/build/`, in a subdirectory named after the build system (`.camko/build/Ninja`, `.camko/build/Unix Makefiles`, ...). By default, changing `build-system` discards the caches of the previous build systems; with `preserve-cache = true` in `[extras]` they are kept until `preserve-cache` is set back to `false` and the project is built again.
 4. CMake performs the actual compilation, and camko simply reports the result.
 
 ` camko run` doesn't implement its own incremental build tracking - it always triggers a build step first and relies on CMake to determine whether anything has actually changed.

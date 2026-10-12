@@ -57,7 +57,18 @@ std::string RunCommand::ConstructRunArguments(const std::vector<std::string>& ar
 {
 	std::string argsString{};
 
-	for (size_t i = 0; i < args.size(); i++)
+	size_t i = 0;
+	for (; i < args.size(); i++)
+	{
+		if (args[i] == "--")
+		{
+			i++; // skip the "--"
+			
+			break;
+		}
+	}
+
+	for (; i < args.size(); i++)
 	{
 		argsString += args[i];
 		argsString.push_back(' ');
