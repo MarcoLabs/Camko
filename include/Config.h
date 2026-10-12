@@ -67,6 +67,11 @@ struct ExamplesConfig
 	std::string examplesDirectory;
 };
 
+struct ExtrasConfig
+{
+	bool preserveCache = false;
+};
+
 using DependencyConfig = std::variant<SmallDependencyConfig, RegularDependencyConfig>;
 
 class Config
@@ -86,6 +91,7 @@ public:
 	std::optional<TestsConfig>                   testsConfig;
 	std::optional<std::vector<DependencyConfig>> dependenciesConfig;
 	std::optional<ExamplesConfig>                examplesConfig;
+	ExtrasConfig                                 extrasConfig;
 
 	CommandError Parse(const std::filesystem::path& configFilepath);
 	CommandError Parse(std::string_view tomlString);
@@ -102,4 +108,5 @@ private:
 	static std::expected<std::optional<TestsConfig>,                   CommandError> ParseTestsConfig(const Marco::Toml& toml);
 	static std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
 	static std::expected<std::optional<ExamplesConfig>,                CommandError> ParseExamplesConfig(const Marco::Toml& toml);
+	static std::expected<ExtrasConfig,                                 CommandError> ParseExtrasConfig(const Marco::Toml& toml);
 };

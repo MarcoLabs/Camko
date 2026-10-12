@@ -78,6 +78,14 @@ CommandError Config::Parse(const Marco::Toml& toml)
 
 	this->examplesConfig = *examplesConfig;
 
+	auto extrasConfig = ParseExtrasConfig(toml);
+	if (! extrasConfig)
+	{
+		return extrasConfig.error();
+	}
+
+	this->extrasConfig = *extrasConfig;
+
 	return CommandError{true, "No errors occured while parsing config"};
 }
 
@@ -433,6 +441,30 @@ std::expected<std::optional<ExamplesConfig>,CommandError> Config::ParseExamplesC
 		}
 
 		config.examplesDirectory = examplesDirectory->get().AsString()->get();
+	}
+
+	return config;
+}
+
+std::expected<ExtrasConfig, CommandError> Config::ParseExtrasConfig(const Marco::Toml& toml)
+{
+	auto extrasSettings = toml["extras"];
+	if (! extrasSettings || ! extrasSettings->get().IsObject())
+	{
+		return ExtrasConfig{};
+	}
+
+	ExtrasConfig config{};
+	
+	auto preserveCache = extrasSettings->get()["preserve-cache"];
+	if (preserveCache)
+	{
+		if (! preserveCache->get().IsBool())
+		{
+			return std::unexpected(CommandError{false, "The preser"});
+		}
+
+		config.preserveCache = preserveCache->get().AsBool().value();
 	}
 
 	return config;
