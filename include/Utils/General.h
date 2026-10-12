@@ -3,6 +3,7 @@
 #include "../CommandError.h"
 #include <expected>
 #include <filesystem>
+#include <string>
 #include <string_view>
 #include <system_error>
 
@@ -12,5 +13,5 @@ namespace utils
 	CommandError FillConfigFile(const std::string_view& content); // requires a string with a null terminator
 
 	std::filesystem::path GetBuildFolderPath(const std::filesystem::path& projectRoot, const std::string& buildSystem);
-	std::error_code RemoveAllFoldersFrom(const std::filesystem::path& path);
+	std::error_code RemoveAllFoldersFrom(const std::filesystem::path& path, const std::string& except = "");
 }

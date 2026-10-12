@@ -56,13 +56,14 @@ std::filesystem::path utils::GetBuildFolderPath(const std::filesystem::path& pro
 	return projectRoot / ".camko" / "build" / buildSystem;
 }
 
-std::error_code utils::RemoveAllFoldersFrom(const std::filesystem::path& path)
+std::error_code utils::RemoveAllFoldersFrom(const std::filesystem::path& path, const std::string& except)
 {
 	std::error_code ec{};
 
 	for (const auto& file : std::filesystem::directory_iterator(path, ec))
 	{
-		if (std::filesystem::is_directory(file))
+		
+		if (std::filesystem::is_directory(file) && file.path().filename().string() != except)
 		{
 			std::filesystem::remove_all(file);
 		}
