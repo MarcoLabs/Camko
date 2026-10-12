@@ -13,7 +13,7 @@
 
 static std::optional<std::ofstream> CreateFile(const std::filesystem::path& filePath);
 
-CommandError InitCommand::Execute(const Config& config, const std::vector<std::string>& args)
+CommandError InitCommand::Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
 	std::string projectRootDir{};
 
@@ -72,7 +72,7 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 		
 		BuildCommand::ConstructCMakeLists(projectPath, config);
 		
-		result = BuildCommand::ConfigureProject(config, camkoDir, buildDir);
+		result = BuildCommand::ConfigureProject(config, camkoDir, buildDir, ranWithCustomFlags);
 	});
 
 	if (! result.valid)

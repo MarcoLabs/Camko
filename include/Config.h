@@ -32,7 +32,7 @@ struct BuildConfig
 	int         cppVersion            = 23;
 	std::string sourceDirectory       = "src";
 	std::string headerDirectory       = "include";
-	
+
 	std::string buildSystem      = "Ninja";
 	bool        buildSharedLibs  = false;
 	bool        enableWarnings   = true;
@@ -79,15 +79,15 @@ class Config
 public:
 	Config(const Config&)           = delete;
 	Config operator=(const Config&) = delete;
-	
+
 	Config(Config&&)           = delete;
 	Config operator=(Config&&) = delete;
 
 	static Config& Instance();
-	
+
 	ProjectConfig projectConfig{};
 	BuildConfig   buildConfig{};
-	
+
 	std::optional<TestsConfig>                   testsConfig;
 	std::optional<std::vector<DependencyConfig>> dependenciesConfig;
 	std::optional<ExamplesConfig>                examplesConfig;
@@ -96,7 +96,9 @@ public:
 	CommandError Parse(const std::filesystem::path& configFilepath);
 	CommandError Parse(std::string_view tomlString);
 	CommandError Parse(const Marco::Toml& toml);
-	
+
+	CommandError FillWithFlags(const std::vector<std::string> commandFlags);
+
 	static std::string BuildTypeToString(BuildType type);
 	static BuildType   StringToBuildType(const std::string& buildTypeString);
 

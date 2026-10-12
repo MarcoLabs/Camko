@@ -93,7 +93,7 @@ TEST_F(BuildCommandTest, NoCamkoDirectory_ReturnsError)
 {
 	std::filesystem::remove_all(this->m_tempDir / ".camko");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Execute(this->m_config, {}, false);
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Error: Could not find an active camko project");
@@ -101,7 +101,7 @@ TEST_F(BuildCommandTest, NoCamkoDirectory_ReturnsError)
 
 TEST_F(BuildCommandTest, MissingConfigToml_ReturnsError)
 {
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Execute(this->m_config, {}, false);
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the camko config file");
@@ -117,7 +117,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the project table in camko config");
@@ -136,7 +136,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The name variable in camko config was not set or is not a string");
@@ -155,7 +155,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 
@@ -176,7 +176,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The version variable in camko config was not set or is not a string");
@@ -197,7 +197,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The description variable in camko config must be a string");
@@ -218,7 +218,7 @@ cpp-version = 23
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "cmake_minimum_required(VERSION 3.20)"));
@@ -231,7 +231,7 @@ TEST_F(BuildCommandTest, ProjectDefinitionWithoutDescription_OmitsDescriptionLin
 {
 	WriteConfig(kMinimalValidConfig);
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_FALSE(Contains(cmakeLists, "DESCRIPTION"));
@@ -248,7 +248,7 @@ version = "1.0.0"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the build table in camko config");
@@ -268,7 +268,7 @@ type = "Release"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in camko config");
@@ -288,7 +288,7 @@ cpp-version = "23"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the cpp-version option in the build table in camko config");
@@ -298,7 +298,7 @@ TEST_F(BuildCommandTest, ValidCppVersion_WritesLanguageStandardLines)
 {
 	WriteConfig(kMinimalValidConfig);
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "set(CMAKE_CXX_STANDARD 23)"));
@@ -310,7 +310,7 @@ TEST_F(BuildCommandTest, OmittedBooleanOptions_UseDocumentedDefaults)
 {
 	WriteConfig(kMinimalValidConfig);
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "option(BUILD_SHARED_LIBS      \"Build shared libraries instead of static\" OFF)"));
@@ -341,7 +341,7 @@ enable-ccache = false
 enable-tests = false
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "\"Build shared libraries instead of static\" ON)"));
@@ -367,7 +367,7 @@ build-shared-libs = "true"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The build-shared-libs option in the build table must be a boolean");
@@ -388,7 +388,7 @@ enable-sanitizers = "true"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The enable-sanitizers option in the build table must be a boolean");
@@ -405,7 +405,7 @@ version = "1.0.0"
 cpp-version = 23
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the type field in the build table in camko config");
@@ -427,7 +427,7 @@ version = "1.0.0"
 cpp-version = 23
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the tests table in camko config. Is it a table?");
@@ -447,7 +447,7 @@ cpp-version = 23
 enable-tests = "false"
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The enable-tests option in the tests table must be a boolean");
@@ -467,7 +467,7 @@ cpp-version = 23
 tests-directory = "tests"
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         OFF)"));
@@ -488,7 +488,7 @@ enable-tests = true
 tests-directory = "tests"
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         ON)"));
@@ -498,7 +498,7 @@ TEST_F(BuildCommandTest, NoDependenciesArray_ProducesNoDependencyBlocks)
 {
 	WriteConfig(kMinimalValidConfig);
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_FALSE(Contains(cmakeLists, "find_package"));
@@ -524,7 +524,7 @@ enable-tests = false
 find-package-name = "OpenSSL"
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "find_package(OpenSSL REQUIRED)"));
@@ -551,7 +551,7 @@ repo = "https://github.com/fmtlib/fmt.git"
 version = "10.1.1"
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "FetchContent_Declare("));
@@ -580,7 +580,7 @@ repo = "https://github.com/MarcoLabs/MarcoLib"
 link-target = "Marco::Toml"
 )");
 
-	this->m_command.Execute(this->m_config, {});
+	this->m_command.Run(this->m_config, {});
 
 	std::string cmakeLists = ReadGeneratedCMakeLists();
 	EXPECT_TRUE(Contains(cmakeLists, "target_link_libraries(camko_core PUBLIC Marco::Toml)"));
@@ -606,7 +606,7 @@ enable-tests = false
 repo = "https://github.com/fmtlib/fmt.git"
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The name in the dependencies array does not exist or isnt a string");
@@ -629,7 +629,7 @@ enable-tests = false
 name = "fmt"
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The repo in the dependencies array does not exist or isnt a string");
@@ -654,7 +654,7 @@ repo = "https://github.com/fmtlib/fmt.git"
 version = 10
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The version in the dependencies array isnt a string");
@@ -679,7 +679,7 @@ repo = "https://github.com/fmtlib/fmt.git"
 link-target = 5
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "The link-target in the dependencies array isnt a string");
@@ -701,7 +701,7 @@ header-directory = "include"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the type field in the build table in camko config");
@@ -722,7 +722,7 @@ type = "Release"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the source-directory field in the build table in camko config");
@@ -744,7 +744,7 @@ source-directory = "src"
 enable-tests = false
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the header-directory field in the build table in camko config");
@@ -767,7 +767,7 @@ header-directory = "include"
 enable-tests = true
 )");
 
-	CommandError result = this->m_command.Execute(this->m_config, {});
+	CommandError result = this->m_command.Run(this->m_config, {});
 
 	EXPECT_FALSE(result.valid);
 	EXPECT_EQ(result.message, "Could not find the tests-directory field in the tests table in camko config");

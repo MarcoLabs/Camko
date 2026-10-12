@@ -1,7 +1,9 @@
 #include "Config.h"
 #include "CommandError.h"
+#include "ConfigFlags.h"
 #include "marco/toml/TomlReader.h"
 #include <expected>
+#include <format>
 #include <fstream>
 #include <optional>
 
@@ -87,6 +89,13 @@ CommandError Config::Parse(const Marco::Toml& toml)
 	this->extrasConfig = *extrasConfig;
 
 	return CommandError{true, "No errors occured while parsing config"};
+}
+
+CommandError Config::FillWithFlags(const std::vector<std::string> commandFlags)
+{
+	ConfigFlags::Apply(&Config::Instance(), commandFlags);
+
+	return CommandError{true, "No errors occured"};
 }
 
 std::string Config::BuildTypeToString(BuildType type)

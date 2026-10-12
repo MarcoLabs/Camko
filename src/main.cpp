@@ -61,11 +61,17 @@ int main(int argc, const char** argv)
 	}
 	auto [commandFlags, runArguments] = SplitArgvIntoFlagsAndRunArguments(argc, argv);
 
-	
+	CommandError error = config.FillWithFlags(commandFlags);
+	if (! error.valid)
+	{
+		std::cout << error.message << std::endl;
+
+		return 1;
+	}
 	
 	Command* command = commands.Find(argv[1]);
 
-	CommandError error = command->Run(config, runArguments);
+	error = command->Run(config, runArguments);
 
 	if (!error.valid)
 	{

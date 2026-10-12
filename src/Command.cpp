@@ -3,7 +3,7 @@
 #include "CommandRegistry.h"
 #include "Config.h"
 
-CommandError Command::Run(const Config& config, const std::vector<std::string>& args)
+CommandError Command::Run(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
 	CommandError error{};
 	
@@ -14,7 +14,7 @@ CommandError Command::Run(const Config& config, const std::vector<std::string>& 
 		return error;
 	}
 
-	error = this->Execute(config, args);
+	error = this->Execute(config, args, ranWithCustomFlags);
 	
 	return error;
 }
@@ -23,7 +23,7 @@ CommandError Command::PrintHelp(const Config& config)
 {
 	const auto& commands = CommandRegistry::Instance();
 
-	CommandError error = commands.Find("help")->Execute(config, { this->Name() });
+	CommandError error = commands.Find("help")->Execute(config, { this->Name() }, false);
 
 	return error;
 }

@@ -5,7 +5,7 @@
 class RunCommand : public Command
 {
 public:
-	CommandError Execute(const Config& config, const std::vector<std::string>& args) override;
+	CommandError Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags) override;
 	std::string Name() const override;
 
 private:	

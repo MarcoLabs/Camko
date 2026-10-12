@@ -12,7 +12,7 @@
 #include <variant>
 #include <vector>
 
-CommandError BuildCommand::Execute(const Config& config, const std::vector<std::string>& args)
+CommandError BuildCommand::Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
 	auto result = utils::GetCamkoProjectRootDirectory();
 	if (! result.has_value())
@@ -24,7 +24,7 @@ CommandError BuildCommand::Execute(const Config& config, const std::vector<std::
 
 	ConstructCMakeLists(projectRoot, config);
 
-	CommandError buildResult = BuildProject(config, projectRoot);
+	CommandError buildResult = BuildProject(config, projectRoot, ranWithCustomFlags);
 	if (! buildResult.valid)
 	{
 		return buildResult;
@@ -38,14 +38,14 @@ std::string BuildCommand::Name() const
 	return "build";
 }
 
-CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot)
+CommandError BuildCommand::BuildProject(const Config& config, const std::filesystem::path& projectRoot, bool ranWithCustomFlags)
 {
 	utils::CreateClangdFile(projectRoot, config.buildConfig.buildSystem);
 
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
 
-	CommandError result = ConfigureProject(config, camkoDir, buildDir);
+	CommandError result = ConfigureProject(config, camkoDir, buildDir, ranWithCustomFlags);
 	if (! result.valid)
 	{
 		return result;
@@ -56,11 +56,11 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 	return CommandError{true, "No errors occured"};
 }
 
-CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
+CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir, bool ranWithCustomFlags)
 {
 	if (! config.extrasConfig.preserveCache)
 	{
-		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path(), config.buildConfig.buildSystem); // buildDir.parent_path() returns the .camko/build folder
+		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path(), ranWithCustomFlags ? "" : config.buildConfig.buildSystem); // buildDir.parent_path() returns the .camko/build folder. If ran with custom flags then rebuild the entire project since a dynamic config was used.
 		if (ec)
 		{
 			return CommandError{false, std::format("Error while trying to delete old build caches. Error message: {}", ec.message())};

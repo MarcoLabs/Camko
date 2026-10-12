@@ -22,7 +22,7 @@ TEST(HelpCommandExecute, SucceedsOnNoArgs)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {});
+	CommandError error = command.Run(config, {});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -33,7 +33,7 @@ TEST(HelpCommandExecute, PrintsDefaultHelpMessageOnNoArgs)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	command.Execute(config, {});
+	command.Run(config, {});
 	std::string output = testing::internal::GetCapturedStdout();
 
 	EXPECT_NE(output.find(defaults::kDefaultHelpMessage), std::string::npos);
@@ -43,7 +43,7 @@ TEST(HelpCommandExecute, FailsOnTooManyArgs)
 {
 	HelpCommand command{};
 
-	CommandError error = command.Execute(config, {"init", "build"});
+	CommandError error = command.Run(config, {"init", "build"});
 
 	EXPECT_FALSE(error.valid);
 	EXPECT_EQ(error.message, "Too many arguments");
@@ -53,7 +53,7 @@ TEST(HelpCommandExecute, TreatsEmptyStringArgsAsUnknownCommand)
 {
 	HelpCommand command{};
 
-	CommandError error = command.Execute(config, {""});
+	CommandError error = command.Run(config, {""});
 
 	EXPECT_FALSE(error.valid);
 }
@@ -63,7 +63,7 @@ TEST(HelpCommandExecute, SucceedsOnInit)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"init"});
+	CommandError error = command.Run(config, {"init"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -74,7 +74,7 @@ TEST(HelpCommandExecute, SucceedsOnBuild)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"build"});
+	CommandError error = command.Run(config, {"build"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -85,7 +85,7 @@ TEST(HelpCommandExecute, SucceedsOnRun)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"run"});
+	CommandError error = command.Run(config, {"run"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -96,7 +96,7 @@ TEST(HelpCommandExecute, SucceedsOnTest)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"test"});
+	CommandError error = command.Run(config, {"test"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -107,7 +107,7 @@ TEST(HelpCommandExecute, SucceedsOnExamples)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"examples"});
+	CommandError error = command.Run(config, {"examples"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -118,7 +118,7 @@ TEST(HelpCommandExecute, SucceedsOnHelp)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	CommandError error = command.Execute(config, {"help"});
+	CommandError error = command.Run(config, {"help"});
 	testing::internal::GetCapturedStdout();
 
 	EXPECT_TRUE(error.valid);
@@ -129,7 +129,7 @@ TEST(HelpCommandExecute, PrintsUsageLineForInit)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	command.Execute(config, {"init"});
+	command.Run(config, {"init"});
 	std::string output = testing::internal::GetCapturedStdout();
 
 	EXPECT_NE(output.find("camko init [DIRECTORY]"), std::string::npos);
@@ -140,7 +140,7 @@ TEST(HelpCommandExecute, PrintsGoogleTestNoteForTest)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	command.Execute(config, {"test"});
+	command.Run(config, {"test"});
 	std::string output = testing::internal::GetCapturedStdout();
 
 	EXPECT_NE(output.find("Google Test"), std::string::npos);
@@ -151,7 +151,7 @@ TEST(HelpCommandExecute, PrintsUsagelineForExamples)
 	HelpCommand command{};
 
 	testing::internal::CaptureStdout();
-	command.Execute(config, {"examples"});
+	command.Run(config, {"examples"});
 	std::string output = testing::internal::GetCapturedStdout();
 
 	EXPECT_NE(output.find("camko examples"), std::string::npos);

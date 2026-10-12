@@ -8,11 +8,11 @@
 #include <string>
 #include <vector>
 
-CommandError TestCommand::Execute(const Config& config, const std::vector<std::string>& args)
+CommandError TestCommand::Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
 	const auto& commands = CommandRegistry::Instance();
 
-	CommandError error = commands.Find("build")->Execute(config, args);
+	CommandError error = commands.Find("build")->Execute(config, args, ranWithCustomFlags);
 
 	if (!error.valid)
 	{
