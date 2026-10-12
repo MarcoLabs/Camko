@@ -461,7 +461,7 @@ std::expected<ExtrasConfig, CommandError> Config::ParseExtrasConfig(const Marco:
 	{
 		if (! preserveCache->get().IsBool())
 		{
-			return std::unexpected(CommandError{false, "The preser"});
+			return std::unexpected(CommandError{false, "The preserve-cache in the extras table must be a bool"});
 		}
 
 		config.preserveCache = preserveCache->get().AsBool().value();
