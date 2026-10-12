@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-static std::vector<std::string> TrimArgvFromFirstTwoElements(int argc, const char** argv); // first element is always camko and second is the option name
+static std::pair<std::vector<std::string>, std::vector<std::string>> SplitArgvIntoFlagsAndRunArguments(int argc, const char** argv); // first element is always camko and second is the option name
 static bool TryHandleGlobalFlags(int argc, const char** argv);
 
 int main(int argc, const char** argv)
@@ -59,12 +59,13 @@ int main(int argc, const char** argv)
 			return 1;
 		}
 	}
+	auto [commandFlags, runArguments] = SplitArgvIntoFlagsAndRunArguments(argc, argv);
 
+	
+	
 	Command* command = commands.Find(argv[1]);
 
-	const auto trimmedArgv = TrimArgvFromFirstTwoElements(argc, argv);
-
-	CommandError error = command->Run(config, trimmedArgv);
+	CommandError error = command->Run(config, runArguments);
 
 	if (!error.valid)
 	{
@@ -76,11 +77,29 @@ int main(int argc, const char** argv)
 	return 0;
 }
 
-std::vector<std::string> TrimArgvFromFirstTwoElements(int argc, const char** argv)
+std::pair<std::vector<std::string>, std::vector<std::string>> SplitArgvIntoFlagsAndRunArguments(int argc, const char** argv)
 {
-	std::vector<std::string> trimmedArgv(argv + 2, argv + argc);
+	std::vector<std::string> commandFlags{};
+	std::vector<std::string> runArguments{};
 
-	return trimmedArgv;
+	int i = 2;
+	for (; i < argc; i++)
+	{
+		if (std::strcmp(argv[i], "--") == 0)
+		{
+			break;
+		}
+
+		commandFlags.push_back(argv[i]);
+	}
+
+	i++; // skip the "--"
+	for (; i < argc; i++)
+	{
+		runArguments.push_back(argv[i]);
+	}
+	
+	return {commandFlags, runArguments};
 }
 
 bool TryHandleGlobalFlags(int argc, const char** argv)
