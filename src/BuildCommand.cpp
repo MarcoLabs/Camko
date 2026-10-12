@@ -45,7 +45,7 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 	const auto camkoDir = projectRoot / ".camko";
 	const auto buildDir = utils::GetBuildFolderPath(projectRoot, config.buildConfig.buildSystem);
 
-	CommandError result = ConfigureProject (config, camkoDir, buildDir);
+	CommandError result = ConfigureProject(config, camkoDir, buildDir);
 	if (! result.valid)
 	{
 		return result;
@@ -58,9 +58,9 @@ CommandError BuildCommand::BuildProject(const Config& config, const std::filesys
 
 CommandError BuildCommand::ConfigureProject(const Config& config, const std::filesystem::path& camkoDir, const std::filesystem::path& buildDir)
 {
-	if (! std::filesystem::exists(buildDir))
+	if (! config.extrasConfig.preserveCache)
 	{
-		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path()); // buildDir.parent_path() returns the .camko/build folder
+		std::error_code ec = utils::RemoveAllFoldersFrom(buildDir.parent_path(), config.buildConfig.buildSystem); // buildDir.parent_path() returns the .camko/build folder
 		if (ec)
 		{
 			return CommandError{false, std::format("Error while trying to delete old build caches. Error message: {}", ec.message())};
