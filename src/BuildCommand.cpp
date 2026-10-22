@@ -184,7 +184,11 @@ std::string BuildCommand::ConstructCMakeProjectDefinition(const Config& config)
 	partOfCmake += std::format("project(\"{}\"\n", config.projectConfig.name);
 	partOfCmake += std::format("\tVERSION \"{}\"\n", config.projectConfig.version);
 
-	partOfCmake += std::format("\tDESCRIPTION \"{}\"\n", config.projectConfig.description);
+	if (! config.projectConfig.description.empty())
+	{
+		partOfCmake += std::format("\tDESCRIPTION \"{}\"\n", config.projectConfig.description);
+	}
+	
 	partOfCmake += "\tLANGUAGES CXX\n)\n\n";
 
 	return partOfCmake;
