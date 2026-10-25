@@ -69,9 +69,9 @@ CommandError InitCommand::Execute(const Config& config, const std::vector<std::s
 	{
 		const auto camkoDir = projectPath / ".camko";
 		const auto buildDir = camkoDir    / "build" / config.buildConfig.buildSystem;
-		
+
 		BuildCommand::ConstructCMakeLists(projectPath, config);
-		
+
 		result = BuildCommand::ConfigureProject(config, camkoDir, buildDir, ranWithCustomFlags);
 	});
 
