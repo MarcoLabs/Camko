@@ -9,7 +9,7 @@
 class BuildCommand : public Command
 {
 public:
-	CommandError Execute(const Config& config, const std::vector<std::string>& args, bool ) override;
+	CommandError Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags) override;
 	std::string Name() const override;
 
 	static CommandError BuildProject     (const Config& config, const std::filesystem::path& projectRoot, bool ranWithCustomFlags);
