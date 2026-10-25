@@ -1,6 +1,7 @@
 #include "CommandRegistry.h"
 #include "Config.h"
 #include "Defaults.h"
+#include "Utils/FlagUtils.h"
 #include "Utils/General.h"
 #include <cstring>
 #include <iostream>
@@ -68,7 +69,7 @@ int main(int argc, const char** argv)
 
 		return 1;
 	}
-	
+
 	Command* command = commands.Find(argv[1]);
 
 	error = command->Run(config, runArguments);
@@ -96,15 +97,23 @@ std::pair<std::vector<std::string>, std::vector<std::string>> SplitArgvIntoFlags
 			break;
 		}
 
-		commandFlags.push_back(argv[i]);
+		if (Utils::HasFlagPrefix(argv[i]))
+		{
+			commandFlags.push_back(argv[i]);
+		}
+		else
+		{
+			runArguments.push_back(argv[i]);
+		}
+		
 	}
 
-	i++; // skip the "--"
+	i++; // skip the potential "--"
 	for (; i < argc; i++)
 	{
 		runArguments.push_back(argv[i]);
 	}
-	
+
 	return {commandFlags, runArguments};
 }
 

@@ -1,5 +1,6 @@
 #include "ConfigFlags.h"
 #include "CommandError.h"
+#include "Utils/FlagUtils.h"
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -96,11 +97,6 @@ namespace
 
 		return value;
 	}
-
-	bool hasPrefix(std::string_view s)
-	{
-		return s.size() > 2 && s.starts_with("--");
-	}
 }
 
 CommandError ConfigFlags::Apply(Config *config, const std::vector<std::string> &flags)
@@ -124,7 +120,7 @@ CommandError ConfigFlags::Apply(Config *config, const std::vector<std::string> &
 
 	for (const auto& flag : flags)
 	{
-		if (! hasPrefix(flag))
+		if (! Utils::HasFlagPrefix(flag))
 		{
 			return CommandError{false, std::format("Unexpected argument '{}', command flags must start with --", flag)};
 		}
