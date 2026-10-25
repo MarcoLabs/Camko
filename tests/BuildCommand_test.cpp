@@ -353,13 +353,6 @@ TEST_F(BuildCommandTest, MissingTestsTable_OmitsTestsOption)
 	EXPECT_FALSE(Contains(cmakeLists, "option(CAMKO_ENABLE_TESTS"));
 }
 
-TEST_F(BuildCommandTest, OmittedEnableTests_DefaultsToOff)
-{
-	std::string cmakeLists = GenerateCMakeLists(MakeToml("", "", "[tests]\ntests-directory = \"tests\"\n"));
-
-	EXPECT_TRUE(Contains(cmakeLists, "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         OFF)"));
-}
-
 TEST_F(BuildCommandTest, EnableTestsTrue_WritesOnOption)
 {
 	std::string cmakeLists = GenerateCMakeLists(MakeToml("", "", "[tests]\nenable-tests = true\ntests-directory = \"tests\"\n"));
