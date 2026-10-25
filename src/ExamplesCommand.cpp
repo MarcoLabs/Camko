@@ -11,7 +11,7 @@ CommandError ExamplesCommand::Execute(const Config& config, const std::vector<st
 {
 	if (! config.examplesConfig.enableExamples)
 	{
-		return CommandError{false, "Examples are not enable in the config file"};
+		return CommandError{false, "Examples are not enabled in the config file"};
 	}
 	
 	const auto& commands = CommandRegistry::Instance();
