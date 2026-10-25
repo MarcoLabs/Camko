@@ -116,8 +116,12 @@ CommandError ConfigFlags::Apply(Config *config, const std::vector<std::string> &
 		Bind("enable-lto",         &Config::buildConfig, &BuildConfig::enableLto),
 		Bind("enable-ccache",      &Config::buildConfig, &BuildConfig::enableCcache),
 
-		Bind("enable-tests", &Config::testsConfig, &TestsConfig::enableTests),
-		
+		Bind("enable-tests",    &Config::testsConfig, &TestsConfig::enableTests),
+		Bind("tests-directory", &Config::testsConfig, &TestsConfig::testsDirectory),
+
+		Bind("enable-examples",    &Config::examplesConfig, &ExamplesConfig::enableExamples),
+		Bind("examples-directory", &Config::examplesConfig, &ExamplesConfig::examplesDirectory),
+
 		Bind("preserve-cache", &Config::extrasConfig, &ExtrasConfig::preserveCache)
 	};
 
