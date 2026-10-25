@@ -3,6 +3,7 @@
 **Camko** is a CMake build system wrapper and project manager for C++. It reads a simple `camko.toml` file, generates the underlying `CMakeLists.txt` for you, and drives CMake so you don't have to hand-write build scripts for every project.
 
 - Configure your project once in `camko.toml`
+- Override any setting on the fly with command-line flags
 - Let camko generate and maintain the CMake build in `.camko/`
 - Build, run, and test through a small predictable CLI
 
@@ -30,6 +31,7 @@
 	- [`[examples]`](#examples)
 	- [`[extras]`](#extras)
 	- [`[[dependencies]]`](#dependencies)
+- [Overriding configuration with flags](#overriding-configuration-with-flags)
 - [Minimal `camko.toml`](#minimal-configtoml)
 - [Full example `camko.toml`](#full-example-configtoml)
 - [How it works](#how-it-works)
@@ -106,8 +108,14 @@ cd my-app
 # Build it. This can be omitted since `camko run` builds before executing the program
 camko build 
 
+# Build a release version without touching camko.toml
+camko build --type=Release
+
 # Run it (arguments after `run` are passed through to your program's argv)
 camko run argument1 argument2
+
+# Run it, passing an argument that starts with `--` to your program
+camko run -- --verbose
 
 # Run the test suite
 camko test
@@ -141,6 +149,8 @@ Build output lives inside `.camko/build/` on purpose: it is an internal implemen
 
 Every command accepts a `-h` / `--help` flag, which prints the same help text as running `camko help [COMMAND]` and exits without doing anything else (e.g. `camko build --help` shows build's help instead of generating or compiling anything).
 
+The commands that read `camko.toml` (`build`, `run`, `test` and `examples`) also accept a flag for every setting in the configuration file, except `[[dependencies]]`. See [Overriding configuration with flags](#overriding-configuration-with-flags).
+
 ### `camko init`
 
 ```
@@ -156,25 +166,35 @@ This creates the standard project layout (`src/`, `include/`, `camko.toml`, and 
 ### `camko build`
 
 ```
-camko build
+camko build [flags]
 ```
 
-Generates `.camko/CMakeLists.txt` from `camko.toml` and invokes CMake to compile the project, using the build system set by `build-system` in `[build]` (Ninja by default). No flags are currently suppored - build behavior is controlled entirely through `camko.toml`
+Generates `.camko/CMakeLists.txt` from `camko.toml` and invokes CMake to compile the project, using the build system set by `build-system` in `[build]` (Ninja by default).
+
+Build behavior is controlled through `camko.toml`, and any setting in it (except `[[dependencies]]`) can be overridden for a single invocation with a flag, e.g. `camko build --type=Release`. See [Overriding configuration with flags](#overriding-configuration-with-flags).
 
 ### `camko run`
 
 ```
-camko run [args...]
+camko run [flags] [-- args...]
 ```
 
 Builds the project (equivalent to `camko build`) and then runs the resulting executable. Whether anything actually needs recompiling is left entirely up to CMake's own incremental build logic - camko does not do its own caching.
 
-Any arguments after `run` are forwarded directly to your program's `main(argc, argv)`.
+Any arguments after `run` that are not flags are forwarded directly to your program's `main(argc, argv)`. Everything after a standalone `--` is always forwarded to your program, even if it looks like a flag:
+
+```bash
+camko run argument1 argument2
+camko run --build-system="Unix Makefiles"
+camko run --type=Release -- --regular_argument
+```
+
+See [Overriding configuration with flags](#overriding-configuration-with-flags) for the full rules.
 
 ### `camko test`
 
 ```
-camko test
+camko test [flags]
 ```
 
 Builds the project and then runs the test suite.
@@ -187,12 +207,12 @@ Builds the project and then runs the test suite.
 ### `camko examples`
 
 ```
-camko examples
+camko examples [flags]
 ```
 
 Builds and runs every example in the project's examples directory, as set by `[examples].examples-directory`.
 
-> **Note:** Examples are **disabled by default**. To use them, add an `[examples]` table to `camko.toml` and set `enable-examples = true` - see [`[examples]`](#examples).
+> **Note:** Examples are **disabled by default**. To use them, add an `[examples]` table to `camko.toml` and set `enable-examples = true` - see [`[examples]`](#examples). Alternatively, enable them for a single run with `camko examples --enable-examples=true --examples-directory=examples`.
 
 - Each example is a subfolder containing its own `main.cpp` — this is what camko looks for to identify something as a runnable example. A folder without a `main.cpp` is not picked up.
 - Folders can be **nested** — `camko examples` walks the tree recursively, so you can organize examples into subcategories (e.g. `examples/networking/tcp/main.cpp`, `examples/networking/udp/main.cpp`) and they'll still be discovered.
@@ -240,6 +260,8 @@ camko help build
 ---
 
 ## Configuration reference (`camko.toml`)
+
+Every key in the tables below, with the exception of `[[dependencies]]`, can also be set from the command line with a flag of the same name, e.g. `--build-system="Unix Makefiles"`. See [Overriding configuration with flags](#overriding-configuration-with-flags).
 
 ### [project]
 
@@ -294,12 +316,18 @@ The optional `build-system` key in `[build]` selects which build system CMake ge
 build-system = "Unix Makefiles"
 ```
 
+The same can be done for a single invocation with the `--build-system` flag:
+
+```bash
+camko build --build-system="Unix Makefiles"
+```
+
 - The value must be the name of a CMake generator available on your machine (run `cmake --help` to see the list under "Generators").
 - The value is **case-sensitive**. `"Ninja"` works, but `"ninja"` does not. The same applies to every other generator name (e.g. `"Unix Makefiles"`, not `"unix makefiles"`).
 - Ninja is the default, but it is not bundled with CMake. Install it separately (see [Requirements](#installation)) or set `build-system` to a generator you already have.
 - Whichever build system you pick has to be installed and on your `PATH`; camko does not install it for you.
 - Each build system gets its own build directory inside `.camko/build/`, named after the value of `build-system`: `.camko/build/Ninja` for `"Ninja"`, `.camko/build/Unix Makefiles` for `"Unix Makefiles"`, and so on. Note the directory name keeps the generator's exact spelling, spaces included.
-- By default, changing `build-system` **discards all previous caches**. When you switch to a different build system, the CMake caches and build output of the previous build systems are thrown away, and the project is built from scratch with the new one. Expect a full rebuild after every change, including when you switch back to a build system you used before - nothing is kept from earlier builds. To keep the build files of previous build systems instead, enable [`preserve-cache`](#extras) in the `[extras]` table.
+- By default, changing `build-system` **discards all previous caches**. When you switch to a different build system, the CMake caches and build output of the previous build systems are thrown away, and the project is built from scratch with the new one. Expect a full rebuild after every change, including when you switch back to a build system you used before - nothing is kept from earlier builds. This applies equally when the change comes from the `--build-system` flag instead of `camko.toml`. To keep the build files of previous build systems instead, enable [`preserve-cache`](#extras) in the `[extras]` table.
 
 ### `[tests]`
 
@@ -362,6 +390,8 @@ For example:
 
 Dependencies are declared as an array of tables and are fetched via CMake's `FetchContent`. Each entry pulls a dependency straight from a Git repository at a given tag/commit — there's no separate lock file or package manager involved.
 
+> **Note:** Dependencies can only be declared in `camko.toml`. Unlike every other setting, they cannot be overridden with command-line flags.
+
 | Key                 | Type   | Required | Description |
 |---------------------|--------|----------|-------------|
 | `name`              | string | yes      | A label for the dependency (used internally by `FetchContent`). |
@@ -386,6 +416,59 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
 ```
 
 > **Note:** A library's `FetchContent` name and its actual CMake link target are two different things. If you're not sure what target a dependency exports, check its README, look for `add_library`/`ALIAS` definitions in its `CMakeLists.txt`, or run `cmake --build build --target help` after fetching it.
+
+---
+
+## Overriding configuration with flags
+
+Every setting in `camko.toml` can be changed dynamically from the command line, with the exception of [`[[dependencies]]`](#dependencies). This applies to the commands that read the configuration: `camko build`, `camko run`, `camko test` and `camko examples`.
+
+```bash
+camko run --build-system="Unix Makefiles"
+```
+
+### Flag syntax
+
+- A flag starts with `--`, followed by the name of the setting exactly as it appears in the [configuration reference](#configuration-reference-configtoml), an `=`, and the value: `--name=value`.
+- The flag name is the key name alone, without the table it belongs to. It is `--build-system`, not `--build.build-system`.
+- A value that contains no spaces can be written without quotes. A value that contains spaces must be wrapped in quotes so the shell passes it as a single argument: `--build-system="Unix Makefiles"`.
+- Values use the same types as in `camko.toml`: strings are written as-is (no extra quoting required), integers as plain numbers, and booleans as `true` or `false`.
+
+| `camko.toml`                          | Equivalent flag                    |
+|---------------------------------------|------------------------------------|
+| `[project]` `name = "app"`            | `--name=app`                       |
+| `[build]` `type = "Release"`          | `--type=Release`                   |
+| `[build]` `cpp-version = 20`          | `--cpp-version=20`                 |
+| `[build]` `build-system = "Unix Makefiles"` | `--build-system="Unix Makefiles"` |
+| `[build]` `enable-sanitizers = true`  | `--enable-sanitizers=true`         |
+| `[tests]` `tests-directory = "t"`     | `--tests-directory=t`              |
+| `[examples]` `enable-examples = true` | `--enable-examples=true`           |
+| `[extras]` `preserve-cache = true`    | `--preserve-cache=true`            |
+
+### Precedence
+
+- A flag overrides the matching value in `camko.toml` for that single invocation only. `camko.toml` itself is never modified, so the next command without the flag goes back to the value in the file.
+- Settings without a flag keep the value from `camko.toml`, or their default if the file doesn't set them.
+- The resulting configuration is validated exactly like a `camko.toml` file. For example, `--enable-examples=true` still requires an `examples-directory`, whether it comes from the file or from `--examples-directory=...`, and a value of the wrong type is a config error.
+- Overriding `build-system` behaves like changing it in `camko.toml`: by default the caches of the previous build systems are discarded unless [`preserve-cache`](#extras) is enabled.
+
+### Passing arguments to your program
+
+`camko run` forwards arguments to your program's `main(argc, argv)`. To keep them from being mistaken for camko flags, a standalone `--` ends flag parsing: everything after it is treated as a run argument, never as a flag.
+
+```bash
+# --regular_argument goes to your program, not to camko
+camko run -- --regular_argument
+
+# --type=Release is a camko flag; --verbose and input.txt go to your program
+camko run --type=Release -- --verbose input.txt
+
+# the same --type=Release after the standalone -- is NOT a camko flag
+camko run -- --type=Release
+```
+
+- Flags must come **before** the standalone `--`.
+- Arguments that don't start with `--` can still be passed without the separator (`camko run argument1 argument2`), but using `--` is the safe choice whenever an argument could be mistaken for a flag.
 
 ---
 
@@ -454,11 +537,11 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
 
 ## How it works
 
-1. `camko` parses `camko.toml` from your project root.
-2. It generates a `CMakeLists.txt` inside `.camko/`, translating each `camko.toml` section into the corresponding CMake set up: project definition, C++ standard, build type, tooling, (ccache, `compile_commands.json`), warnings, sanitizers, LTO, dependencies (via `FetchContent`), source globbing, test registration, and install rules.
+1. `camko` parses `camko.toml` from your project root, then applies any command-line flags on top of it. A flag always wins over the value in the file, and the file is left untouched.
+2. It generates a `CMakeLists.txt` inside `.camko/`, translating each section of the resulting configuration into the corresponding CMake set up: project definition, C++ standard, build type, tooling, (ccache, `compile_commands.json`), warnings, sanitizers, LTO, dependencies (via `FetchContent`), source globbing, test registration, and install rules.
 3. CMake is invoked with `.camko` as the source root (`-S .camko`) and the build system from `build-system` as its generator (`Ninja` unless configured otherwise), so all paths to your actual  `src/`/`include/`/`tests/` directories are resolved one level up from there. Build output goes into `.camko/build/`, in a subdirectory named after the build system (`.camko/build/Ninja`, `.camko/build/Unix Makefiles`, ...). By default, changing `build-system` discards the caches of the previous build systems; with `preserve-cache = true` in `[extras]` they are kept until `preserve-cache` is set back to `false` and the project is built again.
 4. CMake performs the actual compilation, and camko simply reports the result.
 
-` camko run` doesn't implement its own incremental build tracking - it always triggers a build step first and relies on CMake to determine whether anything has actually changed.
+` camko run` doesn't implement its own incremental build tracking - it always triggers a build step first and relies on CMake to determine whether anything has actually changed. Arguments after a standalone `--` are passed to the built program untouched.
 
 `camko test` follows the same pattern as `camko run`: it builds first, then invokes CTest. It does not check `[tests].enable-tests` before doing so, and it only knows about test files matching the `*_test.cpp` naming convention, built against Google Test.
