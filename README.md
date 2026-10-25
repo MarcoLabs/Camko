@@ -199,7 +199,7 @@ camko test [flags]
 
 Builds the project and then runs the test suite.
 
-> **Note:** `camko test` currently attempts to build and run tests regardless of the `[tests].enable-tests` setting in `camko.toml` - it does not check that flag before running. If your `tests/` directory is missing, empty, or doesn't define any `*_test.cpp` files, expect the underlying CMake/CTest step to fail or report no tests found rather than being skipped cleanly.
+> **Note:** `camko test` only runs when tests are enabled. If `[tests].enable-tests` is `false` (the default), the command will not run at all. Enable tests in `camko.toml`, or for a single run with `camko test --enable-tests=true --tests-directory=tests`. If tests are enabled but your tests directory is missing, empty, or doesn't define any `*_test.cpp` files, expect the underlying CMake/CTest step to fail or report no tests found.
 
 - Test files must use the **`_test.cpp` postfix** (e.g. `foo_test.cpp`) to be picked up and registered as tests. Files that don't follow this naming convention are not included in the test build.
 - Tests are only supported through **Google Test**. This is the sole testing framework camko integrates with, and it's a fixed part of the tool - it isn't configurable and there are no plans to support alternative test frameworks.
@@ -212,7 +212,7 @@ camko examples [flags]
 
 Builds and runs every example in the project's examples directory, as set by `[examples].examples-directory`.
 
-> **Note:** Examples are **disabled by default**. To use them, add an `[examples]` table to `camko.toml` and set `enable-examples = true` - see [`[examples]`](#examples). Alternatively, enable them for a single run with `camko examples --enable-examples=true --examples-directory=examples`.
+> **Note:** Examples are **disabled by default**, and `camko examples` will not run unless they are enabled. To use them, add an `[examples]` table to `camko.toml` and set `enable-examples = true` - see [`[examples]`](#examples). Alternatively, enable them for a single run with `camko examples --enable-examples=true --examples-directory=examples`.
 
 - Each example is a subfolder containing its own `main.cpp` — this is what camko looks for to identify something as a runnable example. A folder without a `main.cpp` is not picked up.
 - Folders can be **nested** — `camko examples` walks the tree recursively, so you can organize examples into subcategories (e.g. `examples/networking/tcp/main.cpp`, `examples/networking/udp/main.cpp`) and they'll still be discovered.
@@ -336,7 +336,7 @@ camko build --build-system="Unix Makefiles"
 | `enable-tests`    | bool   | `false`     | Enable building and registering tests. |
 | `tests-directory` | string | `"tests"`   | Directory containing test files. Files must follow the `*_test.cpp` naming convention. |
 
-> Tests are built with **Google Test** - this is the only supported testing framework and is not configurable. Only files ending in `_test.cpp` inside `tests-directory` are picked up. Note that `camko test` (see [Commands](#camko-test)) does not currently check `enable-tests` before attempting to run tests.
+> Tests are built with **Google Test** - this is the only supported testing framework and is not configurable. Only files ending in `_test.cpp` inside `tests-directory` are picked up. `camko test` (see [Commands](#camko-test)) will not run unless `enable-tests` is `true`.
 
 ```toml
 [tests]
@@ -356,7 +356,7 @@ The `[examples]` table is entirely optional. If it is omitted, examples are **di
 - Examples are **disabled by default**. The table can exist without `enable-examples`, in which case examples stay disabled.
 - If `enable-examples` is present but is not a boolean, camko reports an error instead of falling back to the default.
 - If `enable-examples = true` and `examples-directory` is missing or is not a string, camko reports an error. There is no implicit fallback to `"examples"` once examples are enabled, so always set the directory explicitly.
-- When `enable-examples = false`, `examples-directory` is not read or validated.
+- When `enable-examples = false`, `examples-directory` is not read or validated, and `camko examples` will not run.
 - Each example is a subfolder of `examples-directory` containing its own `main.cpp`; nested folders are discovered recursively. See [`camko examples`](#camko-examples).
 
 ```toml
@@ -544,4 +544,4 @@ find-package-name = "nlohmann_json" # only needed if installed using a package m
 
 ` camko run` doesn't implement its own incremental build tracking - it always triggers a build step first and relies on CMake to determine whether anything has actually changed. Arguments after a standalone `--` are passed to the built program untouched.
 
-`camko test` follows the same pattern as `camko run`: it builds first, then invokes CTest. It does not check `[tests].enable-tests` before doing so, and it only knows about test files matching the `*_test.cpp` naming convention, built against Google Test.
+`camko test` follows the same pattern as `camko run`: it builds first, then invokes CTest. It only runs when `[tests].enable-tests` is `true`, and it only knows about test files matching the `*_test.cpp` naming convention, built against Google Test. Likewise, `camko examples` only runs when `[examples].enable-examples` is `true`.

@@ -10,6 +10,11 @@
 
 CommandError TestCommand::Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
+	if (! config.testsConfig.enableTests)
+	{
+		return CommandError{false, "Tests are not enabled in the config file"};
+	}
+	
 	const auto& commands = CommandRegistry::Instance();
 
 	CommandError error = commands.Find("build")->Execute(config, args, ranWithCustomFlags);

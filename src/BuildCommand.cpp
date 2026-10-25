@@ -233,7 +233,7 @@ std::string BuildCommand::ConstructTestOptions(const Config& config)
 
 	std::string partOfCmake{};
 
-	partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", config.testsConfig.enableTests ? "ON" : "OFF");
+	partOfCmake += "option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         ON)\n\n";
 
 	return partOfCmake;
 }
@@ -247,7 +247,7 @@ std::string BuildCommand::ConstructExamplesOptions(const Config& config)
 		return "";
 	}
 
-	partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", config.examplesConfig.enableExamples ? "ON" : "OFF");
+	partOfCmake += "option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           ON)\n\n";
 
 
 	return partOfCmake;

@@ -9,6 +9,11 @@ static bool IsExecutable(const std::filesystem::perms& permissions);
 
 CommandError ExamplesCommand::Execute(const Config& config, const std::vector<std::string>& args, bool ranWithCustomFlags)
 {
+	if (! config.examplesConfig.enableExamples)
+	{
+		return CommandError{false, "Examples are not enabled in the config file"};
+	}
+	
 	const auto& commands = CommandRegistry::Instance();
 
 	CommandError error = commands.Find("build")->Execute(config, args, ranWithCustomFlags);
