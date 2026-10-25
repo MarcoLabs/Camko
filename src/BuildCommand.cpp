@@ -84,18 +84,18 @@ CommandError BuildCommand::ConfigureProject(const Config& config, const std::fil
 		Config::BuildTypeToString(config.buildConfig.type),
 		config.buildConfig.sourceDirectory,
 		config.buildConfig.headerDirectory,
-		(config.testsConfig    && config.testsConfig->enableTests)       ? "ON" : "OFF",
-		(config.examplesConfig && config.examplesConfig->enableExamples) ? "ON" : "OFF"
+		(config.testsConfig.enableTests)       ? "ON" : "OFF",
+		(config.examplesConfig.enableExamples) ? "ON" : "OFF"
 	);
 
-	if (config.testsConfig && config.testsConfig->enableTests)
+	if (config.testsConfig.enableTests)
 	{
-		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", config.testsConfig->testsDirectory);
+		configureCmd += std::format(" -DCAMKO_TESTS_DIR=\"../{}\"", config.testsConfig.testsDirectory);
 	}
 
-	if (config.examplesConfig && config.examplesConfig->enableExamples)
+	if (config.examplesConfig.enableExamples)
 	{
-		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", config.examplesConfig->examplesDirectory);
+		configureCmd += std::format(" -DCAMKO_EXAMPLES_PATH=\"../{}\"", config.examplesConfig.examplesDirectory);
 	}
 
 	configureCmd += std::format(" -G \"{}\"", config.buildConfig.buildSystem);
@@ -226,14 +226,14 @@ std::string BuildCommand::ConstructUserConfigurableOptions(const Config& config)
 
 std::string BuildCommand::ConstructTestOptions(const Config& config)
 {
-	if (! config.testsConfig)
+	if (! config.testsConfig.enableTests)
 	{
 		return "";
 	}
 
 	std::string partOfCmake{};
 
-	partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", config.testsConfig->enableTests ? "ON" : "OFF");
+	partOfCmake += std::format("option(CAMKO_ENABLE_TESTS          \"Build unit tests\"                         {})\n\n", config.testsConfig.enableTests ? "ON" : "OFF");
 
 	return partOfCmake;
 }
@@ -242,12 +242,12 @@ std::string BuildCommand::ConstructExamplesOptions(const Config& config)
 {
 	std::string partOfCmake{};
 
-	if (! config.examplesConfig)
+	if (! config.examplesConfig.enableExamples)
 	{
 		return "";
 	}
 
-	partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", config.examplesConfig->enableExamples ? "ON" : "OFF");
+	partOfCmake += std::format("option(CAMKO_ENABLE_EXAMPLES       \"Build examples\"                           {})\n\n", config.examplesConfig.enableExamples ? "ON" : "OFF");
 
 
 	return partOfCmake;
@@ -257,12 +257,12 @@ std::string BuildCommand::ConstructDependencies(const Config& config)
 {
 	std::string partOfCmake{};
 
-	if (! config.dependenciesConfig)
+	if (config.dependenciesConfig.empty())
 	{
 		return "";
 	}
 
-	for (const auto& dependency : *config.dependenciesConfig)
+	for (const auto& dependency : config.dependenciesConfig)
 	{
 		if (const auto* smallDependencyConfig = std::get_if<SmallDependencyConfig>(&dependency))
 		{

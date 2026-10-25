@@ -1,5 +1,6 @@
 #include "ConfigFlags.h"
 #include "CommandError.h"
+#include "Config.h"
 #include "Utils/FlagUtils.h"
 #include <algorithm>
 #include <array>
@@ -114,6 +115,8 @@ CommandError ConfigFlags::Apply(Config *config, const std::vector<std::string> &
 		Bind("enable-sanitizers",  &Config::buildConfig, &BuildConfig::enableSanitizers),
 		Bind("enable-lto",         &Config::buildConfig, &BuildConfig::enableLto),
 		Bind("enable-ccache",      &Config::buildConfig, &BuildConfig::enableCcache),
+
+		Bind("enable-tests", &Config::testsConfig, &TestsConfig::enableTests),
 		
 		Bind("preserve-cache", &Config::extrasConfig, &ExtrasConfig::preserveCache)
 	};

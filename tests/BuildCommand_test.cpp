@@ -49,7 +49,7 @@ TEST(ConfigParseTest, MinimalConfig_Parses)
 	EXPECT_EQ(config.projectConfig.version, "1.0.0");
 	EXPECT_EQ(config.buildConfig.type, BuildType::Release);
 	EXPECT_EQ(config.buildConfig.cppVersion, 23);
-	EXPECT_FALSE(config.testsConfig.has_value());
+	EXPECT_FALSE(config.testsConfig.enableTests);
 }
 
 TEST(ConfigParseTest, MissingProjectTable_ReturnsError)
@@ -156,12 +156,12 @@ TEST(ConfigParseTest, NonBooleanEnableSanitizers_ReturnsError)
 	EXPECT_EQ(result.message, "The enable-sanitizers option in the build table must be a boolean");
 }
 
-TEST(ConfigParseTest, MissingTestsTable_LeavesTestsConfigEmpty)
+TEST(ConfigParseTest, MissingTestsTable_LeavesEnableTestsAsFalse)
 {
 	CommandError result = ParseToml(MakeToml());
 
 	EXPECT_TRUE(result.valid);
-	EXPECT_FALSE(Config::Instance().testsConfig.has_value());
+	EXPECT_FALSE(Config::Instance().testsConfig.enableTests);
 }
 
 TEST(ConfigParseTest, TestsKeyNotATable_ReturnsError)

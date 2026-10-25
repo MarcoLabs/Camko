@@ -88,10 +88,10 @@ public:
 	ProjectConfig projectConfig{};
 	BuildConfig   buildConfig{};
 
-	std::optional<TestsConfig>                   testsConfig;
-	std::optional<std::vector<DependencyConfig>> dependenciesConfig;
-	std::optional<ExamplesConfig>                examplesConfig;
-	ExtrasConfig                                 extrasConfig;
+	TestsConfig                    testsConfig;
+	ExamplesConfig                 examplesConfig;
+	std::vector<DependencyConfig>  dependenciesConfig;
+	ExtrasConfig                   extrasConfig;
 
 	CommandError Parse(const std::filesystem::path& configFilepath);
 	CommandError Parse(std::string_view tomlString);
@@ -105,10 +105,10 @@ public:
 private:
 	Config() = default;
 
-	static std::expected<ProjectConfig,                                CommandError> ParseProjectConfig(const Marco::Toml& toml);
-	static std::expected<BuildConfig,                                  CommandError> ParseBuildConfig  (const Marco::Toml& toml);
-	static std::expected<std::optional<TestsConfig>,                   CommandError> ParseTestsConfig(const Marco::Toml& toml);
-	static std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
-	static std::expected<std::optional<ExamplesConfig>,                CommandError> ParseExamplesConfig(const Marco::Toml& toml);
-	static std::expected<ExtrasConfig,                                 CommandError> ParseExtrasConfig(const Marco::Toml& toml);
+	static std::expected<ProjectConfig,                 CommandError> ParseProjectConfig(const Marco::Toml& toml);
+	static std::expected<BuildConfig,                   CommandError> ParseBuildConfig  (const Marco::Toml& toml);
+	static std::expected<TestsConfig,                   CommandError> ParseTestsConfig(const Marco::Toml& toml);
+	static std::expected<std::vector<DependencyConfig>, CommandError> ParseDependenciesConfig(const Marco::Toml& toml);
+	static std::expected<ExamplesConfig,                CommandError> ParseExamplesConfig(const Marco::Toml& toml);
+	static std::expected<ExtrasConfig,                  CommandError> ParseExtrasConfig(const Marco::Toml& toml);
 };

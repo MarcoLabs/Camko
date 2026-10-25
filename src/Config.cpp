@@ -301,12 +301,12 @@ std::expected<BuildConfig, CommandError> Config::ParseBuildConfig(const Marco::T
 	return config;
 }
 
-std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig(const Marco::Toml& toml)
+std::expected<TestsConfig, CommandError> Config::ParseTestsConfig(const Marco::Toml& toml)
 {
 	auto testsSettings = toml["tests"];
 	if (! testsSettings)
 	{
-		return std::nullopt;
+		return TestsConfig{};
 	}
 	else if (! testsSettings->get().IsObject())
 	{
@@ -346,12 +346,12 @@ std::expected<std::optional<TestsConfig>, CommandError> Config::ParseTestsConfig
 	return config;
 }
 
-std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
+std::expected<std::vector<DependencyConfig>, CommandError> Config::ParseDependenciesConfig(const Marco::Toml& toml)
 {
 	auto dependenciesSettings = toml["dependencies"];
 	if (! dependenciesSettings || ! dependenciesSettings->get().IsArray())
 	{
-		return std::nullopt;
+		return {};
 	}
 
 	std::vector<DependencyConfig> dependencies{};
@@ -419,18 +419,18 @@ std::expected<std::optional<std::vector<DependencyConfig>>, CommandError> Config
 	return dependencies;
 }
 
-std::expected<std::optional<ExamplesConfig>,CommandError> Config::ParseExamplesConfig(const Marco::Toml& toml)
+std::expected<ExamplesConfig,CommandError> Config::ParseExamplesConfig(const Marco::Toml& toml)
 {
 	auto examplesSettings = toml["examples"];
 	if (! examplesSettings || ! examplesSettings->get().IsObject())
 	{
-		return std::nullopt;
+		return ExamplesConfig{};
 	}
 
 	auto enableExamples = examplesSettings->get()["enable-examples"];
 	if (! enableExamples)
 	{
-		return std::nullopt;
+		return ExamplesConfig{};
 	}
 	else if (! enableExamples->get().IsBool())
 	{
