@@ -5,7 +5,6 @@
 #include <expected>
 #include <format>
 #include <fstream>
-#include <optional>
 
 Config& Config::Instance()
 {
