@@ -531,7 +531,7 @@ if(CAMKO_ENABLE_TESTS)
 type = \"test\"
 path = '''$<TARGET_FILE:${PROJECT_NAME}_tests>'''
 
-		"
+"
 		)
 
 		target_link_libraries(${PROJECT_NAME}_tests
@@ -598,7 +598,7 @@ if(CAMKO_ENABLE_EXAMPLES)
 type = \"example\"
 path = '''$<TARGET_FILE:${CAMKO_EXAMPLE_TARGET}>'''
 
-		"
+"
 		)
 
 		target_link_libraries(${CAMKO_EXAMPLE_TARGET}
