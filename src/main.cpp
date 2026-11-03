@@ -33,7 +33,7 @@ int main(int argc, const char** argv)
 	auto projectRoot = utils::GetCamkoProjectRootDirectory();
 	if (! projectRoot)
 	{
-		if (std::strcmp(argv[1], "init") == 0)
+		if (std::strcmp(argv[1], "init") == 0 || std::strcmp(argv[1], "help") == 0)
 		{
 			CommandError result = config.Parse(defaults::kDefaultConfigToml);
 
